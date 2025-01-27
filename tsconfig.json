@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    /* Основные опции */
+    "target": "ES2020", // Целевая версия ECMAScript
+    "module": "CommonJS", // Модульная система для Node.js
+    "strict": true, // Включает строгий режим TypeScript
+    "esModuleInterop": true, // Включает поддержку импорта CommonJS модулей с синтаксисом ES6
+    "moduleResolution": "node", // Используем Node.js резолвер модулей
+    "outDir": "./dist", // Папка для скомпилированных файлов
+    "rootDir": "./src", // Папка с исходными файлами
+
+    /* Дополнительные опции */
+    "skipLibCheck": true, // Пропускает проверку типов в библиотеках (ускоряет компиляцию)
+    "forceConsistentCasingInFileNames": true, // Проверяет согласованность использования регистров в путях файлов
+    "resolveJsonModule": true, // Разрешает импорт JSON файлов
+    "noImplicitAny": false // Отключает обязательную аннотацию типов для "any" (можно включить для строгого режима)
+  },
+  "include": [
+    "src/**/*.ts" // Включаем все файлы TypeScript в папке src
+  ],
+  "exclude": [
+    "node_modules", // Исключаем папку node_modules
+    "dist" // Исключаем папку dist (собранные файлы)
+  ]
+}
