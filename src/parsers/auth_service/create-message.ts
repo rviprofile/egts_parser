@@ -1,7 +1,9 @@
 import { CRC8 } from "../../utils/crc8";
 import { CRC16 } from "../../utils/crc16";
 
-// Функция для создания ответа об успешной авторизации с разрешенным сервисом
+/** 
+ * Функция для создания ответа об успешной авторизации с разрешенным сервисом 
+ */
 export function createAuthSuccessMessage({ socket, trackers }) {
   const protocolVersion = 1; // Версия протокола EGTS
   const headerLength = 11; // Длина заголовка с CRC8

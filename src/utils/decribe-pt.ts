@@ -1,3 +1,12 @@
+/** Функция для описания полей пакета с расшифровкой
+ * 
+ * @param {string} code - Код поля пакета
+ * @returns {string} Описание поля пакета
+ *
+ * @example
+ * const field = describePacketFields("PRV");
+ * console.log(field); // "PRV (Protocol Version)"
+ */
 export const describePacketFields = (code: string): string => {
   switch (code) {
     case "PRV":

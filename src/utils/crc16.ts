@@ -30,7 +30,11 @@ const Crc16Table = [
   0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 ];
 
-// Функция для расчета CRC-16 на основе алгоритма из документа
+/** Функция для расчета контрольной суммы CRC-16 на основе таблицы
+ *
+ * @param {Buffer} buffer - Входной буфер для расчета CRC-16
+ * @returns {number} Контрольная сумма CRC-16
+ */
 export function CRC16(buffer: Buffer): number {
   let crc = 0xffff; // Инициализируем CRC как 0xffff
 

@@ -1,18 +1,87 @@
 import { EGTS_PT_APPDATA } from "../../constants";
 
-// Helper function to write a 16-bit integer into a buffer at a given offset
+/**
+ * Записывает 16-битное целое число (unsigned) в буфер в формате Little Endian
+ * и возвращает новый смещённый указатель `offset`.
+ *
+ * @param {number} value - Значение для записи (0–65535).
+ * @param {number} offset - Текущая позиция в буфере, куда будет записано значение.
+ * @param {Buffer} buffer - Буфер, в который производится запись.
+ * @returns {number} Новый `offset`, увеличенный на 2 байта.
+ *
+ * @example
+ * ```ts
+ * let offset = 0;
+ * const buffer = Buffer.alloc(10);
+ * offset = writeUInt16LE(513, offset, buffer);
+ * // buffer теперь содержит [0x01, 0x02, ...]
+ * ```
+ */
 function writeUInt16LE(value, offset, buffer) {
   buffer.writeUInt16LE(value, offset);
   return offset + 2;
 }
 
-// Helper function to write an 8-bit integer into a buffer at a given offset
+/**
+ * Записывает 8-битное целое число (unsigned) в буфер
+ * и возвращает новый смещённый указатель `offset`.
+ *
+ * @param {number} value - Значение для записи (0–255).
+ * @param {number} offset - Текущая позиция в буфере, куда будет записано значение.
+ * @param {Buffer} buffer - Буфер, в который производится запись.
+ * @returns {number} Новый `offset`, увеличенный на 1 байт.
+ *
+ * @example
+ * ```ts
+ * let offset = 0;
+ * const buffer = Buffer.alloc(5);
+ * offset = writeUInt8(255, offset, buffer);
+ * // buffer теперь содержит [0xFF, ...]
+ * ```
+ */
 function writeUInt8(value, offset, buffer) {
   buffer.writeUInt8(value, offset);
   return offset + 1;
 }
 
-// Function to prepare an acknowledgment packet as a Buffer
+/**
+ * Формирует EGTS-ответ в бинарном виде (`Buffer`).
+ *
+ * Эта функция используется для генерации служебного пакета подтверждения (response),
+ * который отправляется в ответ на входящий пакет `EGTS_PT_APPDATA`.
+ *
+ * В ответ включается:
+ * - идентификатор исходного пакета (`responsePacketID`),
+ * - код результата обработки (`processingResult`),
+ * - набор записей (`records`), каждая из которых содержит номер подтверждённой записи
+ *   и статус `EGTS_PC_OK`.
+ *
+ * @param {object} params - Параметры ответа.
+ * @param {any} params.packet - Исходный EGTS-пакет, полученный от устройства.
+ * @param {number} params.recordNum - Номер записи (Record Number), присваиваемый ответу.
+ * @param {number} params.pid - Уникальный идентификатор пакета (Packet ID) для ответа.
+ * @returns {Buffer} Сформированный бинарный буфер ответа EGTS.
+ *
+ * @example
+ * ```ts
+ * const responseBuffer = prepareAnswer({
+ *   packet: {
+ *     packetType: EGTS_PT_APPDATA,
+ *     packetID: 42,
+ *     errorCode: 0,
+ *     servicesFrameData: [
+ *       { recordNumber: 1, sourceServiceType: 5 },
+ *       { recordNumber: 2, sourceServiceType: 5 },
+ *     ],
+ *   },
+ *   recordNum: 100,
+ *   pid: 200,
+ * });
+ *
+ * console.log(responseBuffer);
+ * // <Buffer 01 00 c0 0b 00 0b 00 c8 00 00 2a 00 00 01 00 00 02 00 00>
+ * ```
+ */
 export function prepareAnswer({ packet, recordNum, pid }) {
   const EGTS_PT_RESPONSE = 0; // Define the EGTS response packet type
   const EGTS_PC_OK = 0; // Define the EGTS OK status
@@ -81,4 +150,3 @@ export function prepareAnswer({ packet, recordNum, pid }) {
 
   return Buffer.alloc(0); // Return an empty buffer if no response is generated
 }
-

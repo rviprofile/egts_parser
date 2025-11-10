@@ -1,17 +1,19 @@
 import { Buffer } from "buffer"; // Модуль для работы с буферами в Node.js
 import { SchemaType } from "../types";
 
-// Универсальная функция для создания бинарной строки на основе схемы и данных JSON
+type serializeRecordWithSchemaProps = {
+  schema: SchemaType;
+  flags: { [flagName: string]: number };
+  jsonData: any;
+};
+
+/** Универсальная функция для создания бинарной строки на основе схемы и данных JSON */
 function serializeRecordWithSchema({
   schema,
   flags,
   jsonData,
-}: {
-  schema: SchemaType;
-  flags: { [flagName: string]: number };
-  jsonData: any;
-}) {
-  // Вычислим общую длину буфера на основе схемы
+}: serializeRecordWithSchemaProps) {
+  /** Общая длина буфера на основе схемы */
   let totalLength = 0;
   for (const [key, { length, flag, dynamic }] of Object.entries(schema)) {
     // Если поле зависит от флага и флаг отключен, пропускаем
@@ -29,6 +31,7 @@ function serializeRecordWithSchema({
 
   // Создаем буфер нужной длины
   const buffer = Buffer.alloc(totalLength);
+  /** Смещение */
   let offset = 0;
 
   // Проходим по каждому полю и записываем его в буфер
@@ -38,6 +41,7 @@ function serializeRecordWithSchema({
       continue;
     }
 
+    /** Длинна поля */
     let fieldLength = length;
 
     // Если поле имеет динамическую длину, основанную на другом поле

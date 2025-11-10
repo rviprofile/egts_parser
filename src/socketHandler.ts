@@ -1,7 +1,7 @@
 import net from "net";
 import { parseEGTSMessage } from "./messageParser";
 
-// Массив и коллекция для хранения подключений трекеров
+/** Коллекция для хранения подключений трекеров */
 const trackers = new Map<net.Socket, { [key: string]: any }>();
 
 // Создаем сервер для приема TCP-соединений

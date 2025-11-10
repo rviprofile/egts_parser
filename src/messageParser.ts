@@ -10,9 +10,13 @@ import { parseFlags } from "./utils/flags-parser";
 import { describePacketFields } from "./utils/decribe-pt";
 import { CRC8 } from "./utils/crc8";
 
+/** Параметры для `parseEGTSMessage` */
 type parseEGTSMessageProps = {
+  /** Буфер с бинарными данными EGTS-пакета. */
   buffer: Buffer;
+  /** TCP-сокет, откуда пришло сообщение. */
   socket: net.Socket;
+  /** Коллекция всех подключенных трекеров */
   trackers: Map<
     net.Socket,
     {
@@ -20,31 +24,44 @@ type parseEGTSMessageProps = {
     }
   >;
 };
-
+/**
+ * Разбирает и обрабатывает входящее сообщение по протоколу EGTS.
+ *
+ * @remarks
+ * Функция выполняет следующие шаги:
+ * 1. Определяет тип пакета данных (PT — Packet Type) и парсит его заголовок.
+ * 2. Выводит таблицу значений заголовка для отладки.
+ * 3. Проверяет корректность контрольной суммы заголовка (HCS).
+ * 4. Если пакет содержит `APPDATA` — извлекает и парсит Service Frame Data Records (SFRD),
+ *    передавая их в маршрутизатор `route`.
+ * 5. Если пакет содержит `RESPONSE` — извлекает RPID, PR, и также парсит SFRD для дальнейшей обработки.
+ *
+ */
 export function parseEGTSMessage({
   buffer,
   socket,
   trackers,
 }: parseEGTSMessageProps) {
+  /** Карта кодов типов пакета данных (PT) в читаемые значения */
   const PacketTypeCodes = {
     0: "EGTS_PT_RESPONSE",
     1: "EGTS_PT_APPDATA",
     2: "EGTS_PT_SIGNED_APPDATA",
   };
-
+  /** Разбор флагов заголовка PT (Packet Type) */
   const flags_PT = parseFlags({
     flagsByte: buffer.subarray(2, 3),
     flagSchema: ProtocolPacakgeFlagsSchema,
   });
-
+  /** Парсинг заголовка PT по схеме протокола */
   const result_PT = parseRecordWithSchema({
     buffer: buffer,
     schema: ProtocolPacakgeSchema,
     flags: flags_PT,
   });
-
+  /** Массив для вывода в таблице */
   let result_PT_table: any = [];
-
+  /** Формирование читаемой таблицы данных */
   Object.keys(result_PT).map((key: string) => {
     key === "SFRD"
       ? result_PT_table.push({
@@ -60,17 +77,54 @@ export function parseEGTSMessage({
 
   console.table(result_PT_table);
 
-  // Проверка контрольной суммы
+  /** Проверка контрольной суммы (HCS) */
   if (result_PT["HCS"] !== CRC8(buffer.subarray(0, buffer.readUInt8(3) - 1))) {
     console.error("Ошибка контрольной суммы заголовка");
     return;
   }
 
-  if (PacketTypeCodes[buffer.readUInt8(9)] === "EGTS_PT_APPDATA") {
-    let currentOffset = buffer.readUInt8(3); // Длина заголовка (HL)
-    // Пока смещение меньше, чем длинна буфера минус SFRCS (Services Frame Data Check Sum)
-    while (currentOffset < buffer.length - 2) {
-      // Парсим SFRD (Services Frame Data)
+  /** В 9-м байте пакета содержится его тип (PT) */
+  switch (PacketTypeCodes[buffer.readUInt8(9)]) {
+    case "EGTS_PT_APPDATA": {
+      /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
+      let currentOffset = buffer.readUInt8(3);
+      // Пока смещение меньше, чем длинна буфера минус контрольная сумма (последние 2 байта)
+      while (currentOffset < buffer.length - 2) {
+        // Парсим SFRD (Services Frame Data)
+        const record: {
+          record: {
+            [key: string]: any;
+          };
+          recordData: Buffer;
+          flags: {
+            [flagName: string]: number;
+          };
+          nextOffset: number;
+        } = SFRD_parser({ buffer: buffer, offset: currentOffset });
+
+        currentOffset = record.nextOffset;
+
+        /** Передача распарсенных данных в маршрутизатор */
+        route({
+          data: record,
+          socket: socket,
+          pid: buffer.readUInt16LE(7),
+          trackers: trackers,
+        });
+      }
+      break;
+    }
+    case "EGTS_PT_RESPONSE": {
+      /** Обработка пакета RESPONSE (ответ на запрос) */
+      let currentOffset = buffer.readUInt8(3); // Длина заголовка (HL)
+      console.log(
+        "RPID (Response Packet ID): ",
+        buffer.readUInt16LE(currentOffset)
+      );
+      currentOffset += 2;
+      console.log("PR (Processing Result): ", buffer.readUInt8(currentOffset));
+      currentOffset += 1;
+      /** Парсинг Service Frame Data (SFRD) */
       const record: {
         record: {
           [key: string]: any;
@@ -81,40 +135,14 @@ export function parseEGTSMessage({
         };
         nextOffset: number;
       } = SFRD_parser({ buffer: buffer, offset: currentOffset });
-
-      currentOffset = record.nextOffset;
-
+      /** Передача распарсенных данных в маршрутизатор */
       route({
         data: record,
         socket: socket,
         pid: buffer.readUInt16LE(7),
         trackers: trackers,
       });
+      break;
     }
-  } else if (PacketTypeCodes[buffer.readUInt8(9)] === "EGTS_PT_RESPONSE") {
-    let currentOffset = buffer.readUInt8(3); // Длина заголовка (HL)
-    console.log(
-      "RPID (Response Packet ID): ",
-      buffer.readUInt16LE(currentOffset)
-    );
-    currentOffset += 2;
-    console.log("PR (Processing Result): ", buffer.readUInt8(currentOffset));
-    currentOffset += 1;
-    const record: {
-      record: {
-        [key: string]: any;
-      };
-      recordData: Buffer;
-      flags: {
-        [flagName: string]: number;
-      };
-      nextOffset: number;
-    } = SFRD_parser({ buffer: buffer, offset: currentOffset });
-    route({
-      data: record,
-      socket: socket,
-      pid: buffer.readUInt16LE(7),
-      trackers: trackers,
-    });
   }
 }

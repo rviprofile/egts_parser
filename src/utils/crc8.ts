@@ -21,7 +21,11 @@ const CRC8Table = [
   0x15, 0x3b, 0x0a, 0x59, 0x68, 0xff, 0xce, 0x9d, 0xac,
 ];
 
-// Функция для расчета CRC-8 на основе таблицы
+/** Функция для расчета контрольной суммы CRC-8 на основе таблицы
+ *
+ * @param {Buffer} buffer - Входной буфер для расчета CRC-8
+ * @returns {number} Контрольная сумма CRC-8
+ */
 export function CRC8(buffer: Buffer): number {
   let crc = 0xff; // Инициализируем CRC как 0xFF
 

@@ -1,14 +1,11 @@
-// Эта функция отвечает за разбиение байтовых значений флагов
 import { FlagsSchemaType } from "../types";
 
-// на отдельные значения флагов на основе предоставленной схемы.
-export function parseFlags({
-  flagsByte,
-  flagSchema,
-}: {
+type parseFlagsProps = {
   flagsByte: Buffer;
   flagSchema: FlagsSchemaType;
-}) {
+};
+
+export function parseFlags({ flagsByte, flagSchema }: parseFlagsProps) {
   const flags = {};
 
   // Проходим по каждому флагу в схеме

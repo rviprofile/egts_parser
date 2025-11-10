@@ -1,5 +1,5 @@
 const dsn_map = new Map();
-// Переменная для хранения таймера
+/** Переменная для хранения таймера */
 let updateTimeout: NodeJS.Timeout | null = null;
 
 // Функция для вывода таблицы в консоль

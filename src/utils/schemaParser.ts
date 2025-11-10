@@ -1,19 +1,29 @@
 import { SchemaType } from "../types";
 import iconv from "iconv-lite";
 
-// Универсальная функция для парсинга данных на основе схемы с поддержкой флага dynamic
+type parseRecordWithSchemaProps = {
+  buffer: Buffer;
+  schema: SchemaType;
+  flags: { [flagName: string]: number };
+};
+
+/**
+ * Универсальная функция для парсинга данных на основе схемы с поддержкой флага dynamic
+ *
+ * @param {Buffer} buffer - Буфер с данными для парсинга
+ * @param {SchemaType} schema - Схема, описывающая структуру данных
+ * @param {Object} flags - Флаги, влияющие на парсинг
+ *
+ * @returns {Object} - Результат парсинга
+ */
 export function parseRecordWithSchema({
   buffer,
   schema,
   flags,
-}: {
-  buffer: Buffer;
-  schema: SchemaType;
-  flags: { [flagName: string]: number };
-}) {
-  // Смещение
+}: parseRecordWithSchemaProps) {
+  /** Смещение */
   let offset = 0;
-  // Результат парсинга
+  /** Результат парсинга */
   const parsedData = {};
 
   for (const [
@@ -24,8 +34,8 @@ export function parseRecordWithSchema({
     if (flag && flags[flag] === 0) {
       continue; // Пропускаем поле, если флаг отключен
     }
-
-    let fieldLength = length;
+    /** Длинна поля */
+    let fieldLength: number | undefined = length;
 
     // Если поле имеет динамическую длину, основанную на другом поле
     if (dynamic) {
