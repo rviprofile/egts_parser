@@ -7,8 +7,11 @@ import {
 } from "./parsers/schemas";
 import { parseRecordWithSchema } from "./utils/schemaParser";
 import { parseFlags } from "./utils/flags-parser";
-import { describePacketFields } from "./utils/decribe-pt";
+import { describePacketFields, PacketTypeCodes } from "./utils/decribe-pt";
 import { CRC8 } from "./utils/crc8";
+import { CRC16 } from "./utils/crc16";
+import { consoleTablePT } from "./utils/consoleTablePT";
+import { checkPT } from "./utils/checkPT";
 
 /** Параметры для `parseEGTSMessage` */
 type parseEGTSMessageProps = {
@@ -42,12 +45,6 @@ export function parseEGTSMessage({
   socket,
   trackers,
 }: parseEGTSMessageProps) {
-  /** Карта кодов типов пакета данных (PT) в читаемые значения */
-  const PacketTypeCodes = {
-    0: "EGTS_PT_RESPONSE",
-    1: "EGTS_PT_APPDATA",
-    2: "EGTS_PT_SIGNED_APPDATA",
-  };
   /** Разбор флагов заголовка PT (Packet Type) */
   const flags_PT = parseFlags({
     flagsByte: buffer.subarray(2, 3),
@@ -59,29 +56,19 @@ export function parseEGTSMessage({
     schema: ProtocolPacakgeSchema,
     flags: flags_PT,
   });
-  /** Массив для вывода в таблице */
-  let result_PT_table: any = [];
-  /** Формирование читаемой таблицы данных */
-  Object.keys(result_PT).map((key: string) => {
-    key === "SFRD"
-      ? result_PT_table.push({
-          [`PT ${buffer.length} байт`]: describePacketFields(key),
-          value: "<Buffer/>",
-        })
-      : result_PT_table.push({
-          [`PT ${buffer.length} байт`]: describePacketFields(key),
-          value:
-            key === "PT" ? PacketTypeCodes[result_PT[key]] : result_PT[key],
-        });
+
+  // Выводит result_PT в консоль
+  consoleTablePT({
+    result_PT,
+    buffer,
+    schema: ProtocolPacakgeSchema,
   });
 
-  console.table(result_PT_table);
-
-  /** Проверка контрольной суммы (HCS) */
-  if (result_PT["HCS"] !== CRC8(buffer.subarray(0, buffer.readUInt8(3) - 1))) {
-    console.error("Ошибка контрольной суммы заголовка");
-    return;
-  }
+  checkPT({
+    result_PT,
+    buffer,
+    flags_PT,
+  });
 
   /** В 9-м байте пакета содержится его тип (PT) */
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {

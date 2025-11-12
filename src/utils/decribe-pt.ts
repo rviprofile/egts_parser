@@ -1,5 +1,5 @@
 /** Функция для описания полей пакета с расшифровкой
- * 
+ *
  * @param {string} code - Код поля пакета
  * @returns {string} Описание поля пакета
  *
@@ -32,4 +32,11 @@ export const describePacketFields = (code: string): string => {
     default:
       return code;
   }
+};
+
+/** Карта кодов типов пакета данных (PT) в читаемые значения */
+export const PacketTypeCodes = {
+  0: "EGTS_PT_RESPONSE",
+  1: "EGTS_PT_APPDATA",
+  2: "EGTS_PT_SIGNED_APPDATA",
 };

@@ -1,17 +1,38 @@
-import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
 import { parseAbsAnSensData } from "./an_sens_data";
 import { parseAbsDigSensData } from "./big_sense_data";
 import { parseExtPosData } from "./ext_pos_data";
 import { parsePosData } from "./pos_data";
-import { createTeleDataResponse } from "./create-response";
 
 const subrecordParsers = {
-  16: parsePosData, // EGTS_SR_POS_DATA
-  17: parseExtPosData, // EGTS_SR_EXT_POS_DATA
-  23: parseAbsDigSensData, // EGTS_SR_ABS_DIG_SENS_DATA
-  24: parseAbsAnSensData, // EGTS_SR_ABS_AN_SENS_DATA
-  // другие подзаписи...
+  /** 
+   * EGTS_SR_POS_DATA —
+   * Используется АСН при передаче
+   * основных данных определения местоположения
+   */
+  16: parsePosData,
+
+  /**
+   * EGTS_SR_EXT_POS_DATA — 
+   * Используется АСН при передаче
+   * дополнительных данных определения местоположения
+   */
+  17: parseExtPosData,
+
+  /**
+   * EGTS_SR_ABS_DIG_SENS_DATA —
+   * Применяется АСН для передачи на аппаратно-программный комплекс
+   * данных о состоянии одного дискретного входа
+   */
+  23: parseAbsDigSensData,
+
+  /**
+   * EGTS_SR_ABS_AN_SENS_DATA —
+   * Применяется АСН для передачи на аппаратно-программный комплекс
+   * данных о состоянии одного аналогового входа
+   */
+  24: parseAbsAnSensData,
+
 };
 
 export function parseEGTSTeledataService({

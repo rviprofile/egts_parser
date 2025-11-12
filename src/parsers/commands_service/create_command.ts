@@ -1,7 +1,7 @@
 import { CRC8 } from "../../utils/crc8";
 import { CRC16 } from "../../utils/crc16";
 
-export function createCommand({ socket, trackers }) {
+export function createBlockEngineCommand({ socket, trackers }) {
   function createFleetDoutOnCommand(outputs: number): Buffer {
     const commandCode = 0x0009; // Код команды EGTS_FLEET_DOUT_ON
     const commandBuffer = Buffer.alloc(4); // 4 байта для кода команды и данных

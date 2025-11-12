@@ -1,8 +1,9 @@
 # dependencies
 /node_modules
-
 /go-egts-master
 
 #Lock files
 package-lock.json
 
+#tsc
+/dist

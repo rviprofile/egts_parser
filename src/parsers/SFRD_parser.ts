@@ -1,9 +1,23 @@
+import { consoleTableFlags } from "../utils/consoleTableFlags";
 import { parseFlags } from "../utils/flags-parser";
 import { parseRecordWithSchema } from "../utils/schemaParser";
 import {
   serviceDataRecordFlagSchema,
   serviceDataRecordSchema,
+  SFRDFlagsDictionary,
 } from "./schemas";
+
+const serviceDataRecordSchemaDictionary = {
+  recordLength: "RL (Record Length)",
+  recordNumber: "RN (Record Number) ",
+  flags: "RFL (Record Flags)",
+  oid: "OID (Object Identifier)",
+  evid: "EVID (Event Identifier)",
+  tm: "TM (Time)",
+  sst: "SST (Source Service Type)",
+  rst: "RST (Recipient Service Type)",
+  recordData: "RD (Record Data)",
+};
 
 export function SFRD_parser({
   buffer,
@@ -30,25 +44,11 @@ export function SFRD_parser({
   });
 
   // Выводим флаги в консоль
-  const flags_table = [
-    {
-      "SFRD Record Flags": "SSOD (Source Service On Device)",
-      value: flags.ssod,
-    },
-    {
-      "SFRD Record Flags": "RSOD (Recipient Service On Device)",
-      value: flags.rsod,
-    },
-    { "SFRD Record Flags": "GRP (Group)", value: flags.grp },
-    {
-      "SFRD Record Flags": "RPP (Record Processing Priority)",
-      value: flags.rpp,
-    },
-    { "SFRD Record Flags": "TMFE (Time Field Exists)", value: flags.tmfe },
-    { "SFRD Record Flags": "EVFE (Event ID Field Exists)", value: flags.evfe },
-    { "SFRD Record Flags": "OBFE (Object ID Field Exists)", value: flags.obfe },
-  ];
-  console.table(flags_table);
+  consoleTableFlags({
+    flags,
+    title: "SFRD Flags",
+    dictionary: SFRDFlagsDictionary,
+  });
 
   // Базовая длина заголовка SDR = 7 байт
   let headerLength = 7;
@@ -76,7 +76,7 @@ export function SFRD_parser({
   // Выводим основное содержимое записи
   console.table(
     Object.keys(record).map((key) => ({
-      SFRD: key,
+      SFRD: serviceDataRecordSchemaDictionary[key],
       value: key === "recordData" ? "<Buffer/>" : record[key],
     }))
   );
