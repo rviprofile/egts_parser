@@ -29,7 +29,8 @@ export function createAuthSuccessMessage({ socket, trackers }) {
   let sdr2_offset = 0;
   sdr2.writeUInt16LE(12, sdr2_offset); // RL (Record Length) - параметр определяет размер данных из поля RD;
   sdr2_offset += 2;
-  sdr2.writeUInt16LE(1, sdr2_offset); // RN (Record Number)
+  sdr2.writeUInt16LE(tracker.RN, sdr2_offset); // RN (Record Number)
+  tracker.RN = (tracker.RN + 1) % 65536;
   sdr2_offset += 2;
   sdr1.writeUInt8(0b01000000, sdr2_offset++); // RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
   sdr2.writeUInt8(1, sdr2_offset++); // SST (Source Service Type) - EGTS_AUTH_SERVICE

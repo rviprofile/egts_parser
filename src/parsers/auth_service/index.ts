@@ -3,7 +3,9 @@ import { createAuthSuccessMessage } from "./create_message";
 import net from "net";
 import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
-import { createBlockEngineCommand } from "../commands_service/create_command";
+import {
+  createBlockEngineCommand,
+} from "../commands_service/create_command";
 import {
   encodePacket,
   prepareAnswer,
@@ -121,7 +123,10 @@ export function parseEGTSAuthService({
           trackers: trackers,
         });
         setTimeout(() => {
-          console.log("\x1b[34mОтправили команду о блокировке\x1b[0m");
+          console.log(
+            "\x1b[34mОтправили команду о блокировке\x1b[0m",
+            command.toString("hex")
+          );
           socketSender({
             socket: socket,
             message: command,

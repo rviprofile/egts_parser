@@ -11,13 +11,17 @@ export const checkPT = ({
   flags_PT: {
     [key: string]: any;
   };
-}) => {
+}): boolean => {
+  const result: boolean[] = [];
+
   if (result_PT["HL"] === 11 || result_PT["HL"] === 16) {
     console.log("HL (Header Length): \x1b[32mДлинна заголовка ✅\x1b[0m");
+    result.push(true);
   } else {
     console.log(
       `HL (Header Length): \x1b[31mДлинна заголовка не корректна.\x1b[0m Поддерживается 11 или 16, получено ${result_PT["HL"]}`
     );
+    result.push(false);
   }
 
   /** Проверка контрольной суммы (HCS) */
@@ -25,11 +29,12 @@ export const checkPT = ({
     console.log(
       "HCS (Header Check Sum): \x1b[31mОшибка контрольной суммы заголовка\x1b[0m"
     );
-    return;
+    result.push(false);
   } else {
     console.log(
       "HCS (Header Check Sum): \x1b[32mКонтрольная сумма заголовка ✅\x1b[0m"
     );
+    result.push(true);
   }
 
   if (flags_PT["RTE"] !== 0) {
@@ -37,8 +42,10 @@ export const checkPT = ({
       "RTE (Route): \x1b[33mНеобходима дальнейшая маршрутизация\x1b[0m"
     );
     console.log(result_PT["RCA"]);
+    result.push(true);
   } else {
     console.log("RTE (Route): \x1b[32m0 ✅\x1b[0m");
+    result.push(true);
   }
 
   if (
@@ -57,9 +64,12 @@ export const checkPT = ({
         buffer.subarray(result_PT["HL"], buffer.length - 2).length
       }`
     );
+    result.push(false);
   } else if (result_PT["SFRD"]) {
     console.log(
       "SFRCS (Services Frame Data Check Sum): \x1b[32mКонтрольная сумма данных ✅\x1b[0m"
     );
+    result.push(true);
   }
+  return !result.some((res) => res === false);
 };
