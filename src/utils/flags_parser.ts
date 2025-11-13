@@ -1,9 +1,4 @@
-import { FlagsSchemaType } from "../types";
-
-type parseFlagsProps = {
-  flagsByte: Buffer;
-  flagSchema: FlagsSchemaType;
-};
+import { FlagsSchemaType, parseFlagsProps } from "../types";
 
 export function parseFlags({ flagsByte, flagSchema }: parseFlagsProps) {
   const flags = {};

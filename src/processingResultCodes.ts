@@ -1,9 +1,6 @@
-export const processingResultCodes: {
-  [code: number]: {
-    value: string;
-    description: string;
-  };
-} = {
+import { processingResultCodesType } from "./types";
+
+export const processingResultCodes: processingResultCodesType = {
   0: { value: "EGTS_PC_OK", description: "Успешно обработано" },
   1: { value: "EGTS_PC_IN_PROGRESS", description: " В процессе обработки" },
   128: {

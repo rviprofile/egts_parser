@@ -25,3 +25,47 @@ export type parseServiseProps = {
     }
   >;
 };
+
+/** Параметры для `parseEGTSMessage` */
+export type parseEGTSMessageProps = {
+  /** Буфер с бинарными данными EGTS-пакета. */
+  buffer: Buffer;
+  /** TCP-сокет, откуда пришло сообщение. */
+  socket: net.Socket;
+  /** Коллекция всех подключенных трекеров */
+  trackers: Map<
+    net.Socket,
+    {
+      [key: string]: number;
+    }
+  >;
+};
+
+export type parseFlagsProps = {
+  flagsByte: Buffer;
+  flagSchema: FlagsSchemaType;
+};
+
+export type socketSenderProps = {
+  socket: net.Socket;
+  message: Buffer;
+  trackers: Map<
+    net.Socket,
+    {
+      [key: string]: number;
+    }
+  >;
+};
+
+export type processingResultCodesType = {
+  [code: number]: {
+    value: string;
+    description: string;
+  };
+};
+
+export type serializeRecordWithSchemaProps = {
+  schema: SchemaType;
+  flags: { [flagName: string]: number };
+  jsonData: any;
+};

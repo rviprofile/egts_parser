@@ -17,21 +17,8 @@ import {
 } from "./utils/createConfirmationResponse";
 import { EGTS_PT_APPDATA } from "./constants";
 import { socketSender } from "./socketSender";
+import { parseEGTSMessageProps } from "./types";
 
-/** Параметры для `parseEGTSMessage` */
-type parseEGTSMessageProps = {
-  /** Буфер с бинарными данными EGTS-пакета. */
-  buffer: Buffer;
-  /** TCP-сокет, откуда пришло сообщение. */
-  socket: net.Socket;
-  /** Коллекция всех подключенных трекеров */
-  trackers: Map<
-    net.Socket,
-    {
-      [key: string]: number;
-    }
-  >;
-};
 /**
  * Разбирает и обрабатывает входящее сообщение по протоколу EGTS.
  *
