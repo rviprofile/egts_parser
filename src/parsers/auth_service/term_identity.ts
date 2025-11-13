@@ -4,7 +4,7 @@ import {
   termIdentitySchema,
 } from "./schemas";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
-import { parseFlags } from "../../utils/flags-parser"; // Парсер для флагов
+import { parseFlags } from "../../utils/flags_parser"; // Парсер для флагов
 import { consoleTableFlags } from "../../utils/consoleTableFlags";
 
 export function parseTermIdentity(buffer: Buffer) {

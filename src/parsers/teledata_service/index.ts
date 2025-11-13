@@ -5,7 +5,7 @@ import { parseExtPosData } from "./ext_pos_data";
 import { parsePosData } from "./pos_data";
 
 const subrecordParsers = {
-  /** 
+  /**
    * EGTS_SR_POS_DATA —
    * Используется АСН при передаче
    * основных данных определения местоположения
@@ -13,7 +13,7 @@ const subrecordParsers = {
   16: parsePosData,
 
   /**
-   * EGTS_SR_EXT_POS_DATA — 
+   * EGTS_SR_EXT_POS_DATA —
    * Используется АСН при передаче
    * дополнительных данных определения местоположения
    */
@@ -32,7 +32,6 @@ const subrecordParsers = {
    * данных о состоянии одного аналогового входа
    */
   24: parseAbsAnSensData,
-
 };
 
 export function parseEGTSTeledataService({
@@ -68,13 +67,5 @@ export function parseEGTSTeledataService({
         `TELEDATA_SERVICE: Неизвестный тип подзаписи: ${subrecordType}`
       );
     }
-    // if (subrecordType === 16) {
-    //   console.log(`Отправили подтверждение на EGTS_SR_POS_DATA. PRID: ${pid}`);
-    //   socketSender({
-    //     socket: socket,
-    //     trackers: trackers,
-    //     message: createTeleDataResponse({ socket, trackers, pid }),
-    //   });
-    // }
   }
 }

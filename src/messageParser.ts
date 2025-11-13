@@ -6,12 +6,17 @@ import {
   ProtocolPacakgeSchema,
 } from "./parsers/schemas";
 import { parseRecordWithSchema } from "./utils/schemaParser";
-import { parseFlags } from "./utils/flags-parser";
-import { describePacketFields, PacketTypeCodes } from "./utils/decribe-pt";
-import { CRC8 } from "./utils/crc8";
-import { CRC16 } from "./utils/crc16";
+import { parseFlags } from "./utils/flags_parser";
+import { PacketTypeCodes } from "./utils/decribe-pt";
 import { consoleTablePT } from "./utils/consoleTablePT";
 import { checkPT } from "./utils/checkPT";
+import { processingResultCodes } from "./processingResultCodes";
+import {
+  encodePacket,
+  prepareAnswer,
+} from "./utils/createConfirmationResponse";
+import { EGTS_PT_APPDATA } from "./constants";
+import { socketSender } from "./socketSender";
 
 /** Параметры для `parseEGTSMessage` */
 type parseEGTSMessageProps = {
@@ -73,6 +78,22 @@ export function parseEGTSMessage({
   /** В 9-м байте пакета содержится его тип (PT) */
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {
     case "EGTS_PT_APPDATA": {
+      /** Формируем подтверждение (EGTS_PT_RESPONSE) */
+      const response = prepareAnswer(
+        {
+          PacketType: EGTS_PT_APPDATA,
+          PacketID: buffer.readUInt16LE(7), // переданный в props идентификатор пакета
+        } as any, // остальное prepareAnswer не использует
+        buffer.readUInt16LE(7) + 1 // можно использовать новый ID для ответа
+      );
+
+      const bufferToSend = encodePacket(response);
+      socketSender({
+        socket,
+        message: bufferToSend,
+        trackers,
+      });
+      console.log("[Teledata Service]: EGTS_PT_RESPONSE отправлен ✅");
       /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
       let currentOffset = buffer.readUInt8(3);
       // Пока смещение меньше, чем длинна буфера минус контрольная сумма (последние 2 байта)

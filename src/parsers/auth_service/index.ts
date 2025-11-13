@@ -1,12 +1,16 @@
 import { parseTermIdentity } from "./term_identity";
-import { createAuthSuccessMessage } from "./create-message";
+import { createAuthSuccessMessage } from "./create_message";
 import net from "net";
 import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
 import { createBlockEngineCommand } from "../commands_service/create_command";
-import { prepareAnswer } from "./create-response";
+import {
+  encodePacket,
+  prepareAnswer,
+} from "../../utils/createConfirmationResponse";
 import { termIdentityDictionary } from "./schemas";
 import { parseEGTSMessage } from "../../messageParser";
+import { EGTS_PT_APPDATA } from "../../constants";
 
 /**
  * Словарь функций-парсеров для разных подтипов подзаписей EGTS_AUTH_SERVICE.
@@ -83,24 +87,22 @@ export function parseEGTSAuthService({
       const isLogin = true;
 
       if (isLogin) {
-        // const response = prepareAnswer({
-        //   packet: {
-        //     packetType: 1,
-        //     servicesFrameData: [{ recordNumber: 1, sourceServiceType: 3 }],
-        //     packetID: pid,
-        //     errorCode: 0,
-        //   },
-        //   recordNum: trackers.get(socket)!.PID,
-        //   pid: pid,
-        // });
-        // socketSender({
-        //   socket: socket,
-        //   message: response,
-        //   trackers: trackers,
-        // });
-        // console.log(
-        //   `Отправили подтверждение на сообщение авторизации. PRID: ${pid}`
-        // );
+        /** Формируем подтверждение (EGTS_PT_RESPONSE) */
+        const response = prepareAnswer(
+          {
+            PacketType: EGTS_PT_APPDATA,
+            PacketID: pid, // переданный в props идентификатор пакета
+          } as any, // остальное prepareAnswer не использует
+          pid + 1 // можно использовать новый ID для ответа
+        );
+
+        const bufferToSend = encodePacket(response);
+        socketSender({
+          socket,
+          message: bufferToSend,
+          trackers,
+        });
+        console.log("[Auth Service]: EGTS_PT_RESPONSE отправлен ✅");
 
         /** Готовое сообщение "успешной авторизации" (EGTS_AUTH_SERVICE response) */
         const success: Buffer = createAuthSuccessMessage({
@@ -118,15 +120,8 @@ export function parseEGTSAuthService({
           socket: socket,
           trackers: trackers,
         });
-
-        // console.log("ПАРСИМ СВОЮ ЖЕ КОМАНДУ");
-        // parseEGTSMessage({
-        //   buffer: command,
-        //   socket: socket,
-        //   trackers: trackers,
-        // });
         setTimeout(() => {
-          console.log("Отправили команду");
+          console.log("\x1b[34mОтправили команду о блокировке\x1b[0m");
           socketSender({
             socket: socket,
             message: command,

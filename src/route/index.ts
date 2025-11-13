@@ -4,14 +4,28 @@ import { parseEGTSCommandsService } from "../parsers/commands_service";
 import { parseEGTSTeledataService } from "../parsers/teledata_service";
 
 export const parsers = {
-  1: parseEGTSAuthService, // EGTS_AUTH_SERVICE
-  2: parseEGTSTeledataService, // EGTS_TELEDATA_SERVICE
-  3: parseEGTSCommandsService, // EGTS_COMMANDS_SERVICE
-  // и другие парсеры
+  /**
+   * EGTS_AUTH_SERVICE — Данный тип сервиса применяется для осуществления процедуры аутентификации
+   * АСН (авторизуемой ТП) на авторизующей ТП.
+   */
+  1: parseEGTSAuthService,
+
+  /**
+   * EGTS_TELEDATA_SERVICE — Сервис предназначен для обработки телематической информации
+   * (координатные данные, данные о срабатывании датчиков и т.д.), поступающей от АСН.
+   */
+  2: parseEGTSTeledataService,
+
+  /**
+   * EGTS_COMMANDS_SERVICE — сервис обработки команд.
+   * Данный тип сервиса предназначен для обработки управляющих и конфигурационных команд,
+   * информационных сообщений и статусов, передаваемых между АСН, ТП и операторами
+   */
+  3: parseEGTSCommandsService,
 };
 
 export function route({ data, socket, pid, trackers }) {
-  const parser = parsers[data.record.sst];
+  const parser = parsers[data.record.sst as number];
   if (parser) {
     parser({
       record: data.record.recordData,
@@ -20,8 +34,6 @@ export function route({ data, socket, pid, trackers }) {
       trackers: trackers,
     });
   } else {
-    console.error(
-      `Неизвестный тип сервиса SST: ${data.record.sst}`
-    );
+    console.error(`Неизвестный тип сервиса SST: ${data.record.sst}`);
   }
 }

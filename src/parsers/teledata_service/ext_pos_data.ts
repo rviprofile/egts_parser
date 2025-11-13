@@ -1,4 +1,4 @@
-import { parseFlags } from "../../utils/flags-parser";
+import { parseFlags } from "../../utils/flags_parser";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import { extPosDataFlagSchema, extPosDataSchema } from "./schemas";
 

@@ -1,5 +1,5 @@
 import { parseRecordWithSchema } from "../../utils/schemaParser";
-import { parseFlags } from "../../utils/flags-parser";
+import { parseFlags } from "../../utils/flags_parser";
 import { posDataFlagSchema, posDataSchema } from "./schemas";
 import { convertLat, convertLong } from "../../utils/convertCoordinate";
 import { parseNavigationTime } from "../../utils/parseNavigationTime";

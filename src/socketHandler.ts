@@ -6,7 +6,7 @@ const trackers = new Map<net.Socket, { [key: string]: any }>();
 
 // Создаем сервер для приема TCP-соединений
 const server = net.createServer((socket) => {
-  console.log("Трекер подключился");
+  console.log("\x1b[32mТрекер подключился\x1b[0m");
   // Инициализируем данные для нового трекера
   trackers.set(socket, {
     PID: 0, // Счетчик отправленных сообщений от сервера для каждого трекера
@@ -28,7 +28,7 @@ const server = net.createServer((socket) => {
 
   // Обрабатываем отключение трекера
   socket.on("end", () => {
-    console.log("Трекер отключился");
+    console.log("\x1b[31mТрекер отключился\x1b[0m");
     // Удаляем трекер из колекции
     trackers.delete(socket);
   });

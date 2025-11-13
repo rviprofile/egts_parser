@@ -1,5 +1,5 @@
 import { consoleTableFlags } from "../utils/consoleTableFlags";
-import { parseFlags } from "../utils/flags-parser";
+import { parseFlags } from "../utils/flags_parser";
 import { parseRecordWithSchema } from "../utils/schemaParser";
 import {
   serviceDataRecordFlagSchema,
