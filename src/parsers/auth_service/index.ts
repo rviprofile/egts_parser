@@ -3,9 +3,7 @@ import { createAuthSuccessMessage } from "./create_message";
 import net from "net";
 import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
-import {
-  createBlockEngineCommand,
-} from "../commands_service/create_command";
+import { createBlockEngineCommand } from "../commands_service/create_command";
 import {
   encodePacket,
   prepareAnswer,
@@ -105,7 +103,7 @@ export function parseEGTSAuthService({
           trackers,
         });
         console.log("[Auth Service]: EGTS_PT_RESPONSE отправлен ✅");
-
+        
         /** Готовое сообщение "успешной авторизации" (EGTS_AUTH_SERVICE response) */
         const success: Buffer = createAuthSuccessMessage({
           socket: socket,

@@ -1,79 +1,148 @@
 import { CRC8 } from "../../utils/crc8";
 import { CRC16 } from "../../utils/crc16";
+import {
+  EGTS_AUTH_SERVICE,
+  EGTS_COMMANDS_SERVICE,
+  EGTS_PT_APPDATA,
+  EGTS_TELEDATA_SERVICE,
+} from "../../constants";
 
-/** 
- * Функция для создания ответа об успешной авторизации с разрешенным сервисом 
+/**
+ * Функция для создания ответа об успешной авторизации с разрешенным сервисом
  */
 export function createAuthSuccessMessage({ socket, trackers }) {
-  const protocolVersion = 1; // Версия протокола EGTS
-  const headerLength = 11; // Длина заголовка с CRC8
-  const packetType = 1; // EGTS_PT_APPDATA
+  /** PRV (Protocol Version) */
+  const protocolVersion = 1;
+  /** HL (Header Length) — Длина заголовка с CRC8 */
+  const headerLength = 11;
+  /** PT (Packet Type) */
+  const packetType = EGTS_PT_APPDATA;
+  /** Подключенный трекер */
   const tracker = trackers.get(socket);
 
+  /** -- SDR 1 (Service Data Record) -- */
   const sdr1 = Buffer.alloc(11);
   let sdr1_offset = 0;
-  sdr1.writeUInt16LE(4, sdr1_offset); // RL (Record Length) - параметр определяет размер данных из поля RD;
-  sdr1_offset += 2;
-  sdr1.writeUInt16LE(0, sdr1_offset); // RN (Record Number)
-  sdr1_offset += 2;
-  sdr1.writeUInt8(0b01000000, sdr1_offset++); // RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
-  sdr1.writeUInt8(1, sdr1_offset++); // SST (Source Service Type) - EGTS_AUTH_SERVICE
-  sdr1.writeUInt8(1, sdr1_offset++); // RST (Recipient Service Type) - EGTS_AUTH_SERVICE
 
-  sdr1.writeUInt8(9, sdr1_offset++); // SRT (Subrecord Type) - EGTS_SR_RESULT_CODE
-  sdr1.writeUInt16LE(1, sdr1_offset); // SRL (Subrecord Length)
+  /** RL (Record Length) - параметр определяет размер данных из поля RD */
+  sdr1.writeUInt16LE(4, sdr1_offset);
   sdr1_offset += 2;
-  sdr1.writeUInt8(0, sdr1_offset++); // RCD (Result Code) - EGTS_PC_OK
+  /** RN (Record Number) */
+  sdr1.writeUInt16LE(tracker.RN, sdr1_offset);
+  tracker.RN = (tracker.RN + 1) % 65536;
+  sdr1_offset += 2;
 
+  /**
+   * RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
+   *
+   * SSOD — 0 - сервис-отправитель расположен на авторизующей ТП.
+   * RSOD — 1 - сервис-получатель расположен на стороне АСН (авторизуемой ТП).
+   * GRP — 0 - принадлежность группе отсутствует.
+   * RPP — 00 - наивысший.
+   * TMFE — 0 - поле TM отсутствует.
+   * EVFE — 0 - поле EVID отсутствует.
+   * OBFE — 0 - поле OID отсутствует.
+   */
+  sdr1.writeUInt8(0b01000000, sdr1_offset++);
+  /** SST (Source Service Type) */
+  sdr1.writeUInt8(EGTS_AUTH_SERVICE, sdr1_offset++);
+  /** RST (Recipient Service Type) */
+  sdr1.writeUInt8(EGTS_AUTH_SERVICE, sdr1_offset++);
+  /** SRT (Subrecord Type) - EGTS_SR_RESULT_CODE */
+  sdr1.writeUInt8(9, sdr1_offset++);
+  /** SRL (Subrecord Length) */
+  sdr1.writeUInt16LE(1, sdr1_offset);
+  sdr1_offset += 2;
+  /** RCD (Result Code) - EGTS_PC_OK */
+  sdr1.writeUInt8(0, sdr1_offset++);
+
+  /** -- SDR 2 (Service Data Record) -- */
   const sdr2 = Buffer.alloc(19);
   let sdr2_offset = 0;
-  sdr2.writeUInt16LE(12, sdr2_offset); // RL (Record Length) - параметр определяет размер данных из поля RD;
+  /** RL (Record Length) - параметр определяет размер данных из поля RD */
+  sdr2.writeUInt16LE(12, sdr2_offset);
   sdr2_offset += 2;
-  sdr2.writeUInt16LE(tracker.RN, sdr2_offset); // RN (Record Number)
+  /** RN (Record Number) */
+  sdr2.writeUInt16LE(tracker.RN, sdr2_offset);
   tracker.RN = (tracker.RN + 1) % 65536;
   sdr2_offset += 2;
-  sdr1.writeUInt8(0b01000000, sdr2_offset++); // RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
-  sdr2.writeUInt8(1, sdr2_offset++); // SST (Source Service Type) - EGTS_AUTH_SERVICE
-  sdr2.writeUInt8(1, sdr2_offset++); // RST (Recipient Service Type) - EGTS_AUTH_SERVICE
-  sdr2.writeUInt8(8, sdr2_offset++); // SRT (Subrecord Type) - EGTS_SR_SERVICE_INFO
-  sdr2.writeUInt16LE(3, sdr2_offset); // SRL (Subrecord Length)
-  sdr2_offset += 2;
-  sdr2.writeUInt8(2, sdr2_offset++); // ST (Service Type) - EGTS_TELEDATA_SERVICE
-  sdr2.writeUInt8(0, sdr2_offset++); // SST (Service Statement) - EGTS_SST_IN_SERVICE
-  sdr2.writeUInt8(0, sdr2_offset++); // SRVP (Service Parameters)
 
-  sdr2.writeUInt8(8, sdr2_offset++); // SRT (Subrecord Type) - EGTS_SR_SERVICE_INFO
-  sdr2.writeUInt16LE(3, sdr2_offset); // SRL (Subrecord Length)
+  /**
+   * RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
+   *
+   * SSOD — 0 - сервис-отправитель расположен на авторизующей ТП.
+   * RSOD — 1 - сервис-получатель расположен на стороне АСН (авторизуемой ТП).
+   * GRP — 0 - принадлежность группе отсутствует.
+   * RPP — 00 - наивысший.
+   * TMFE — 0 - поле TM отсутствует.
+   * EVFE — 0 - поле EVID отсутствует.
+   * OBFE — 0 - поле OID отсутствует.
+   */
+  sdr2.writeUInt8(0b01000000, sdr2_offset++);
+  /** SST (Source Service Type) */
+  sdr2.writeUInt8(EGTS_AUTH_SERVICE, sdr2_offset++);
+  /** RST (Recipient Service Type) */
+  sdr2.writeUInt8(EGTS_AUTH_SERVICE, sdr2_offset++);
+  /** SRT (Subrecord Type) - EGTS_SR_SERVICE_INFO */
+  sdr2.writeUInt8(8, sdr2_offset++);
+  /** SRL (Subrecord Length) */
+  sdr2.writeUInt16LE(3, sdr2_offset);
   sdr2_offset += 2;
-  sdr2.writeUInt8(3, sdr2_offset++); // ST (Service Type) - EGTS_COMMANDS_SERVICE
-  sdr2.writeUInt8(0, sdr2_offset++); // SST (Service Statement) - EGTS_SST_IN_SERVICE
-  sdr2.writeUInt8(0, sdr2_offset++); // SRVP (Service Parameters)
+  /** ST (Service Type) - EGTS_TELEDATA_SERVICE */
+  sdr2.writeUInt8(EGTS_TELEDATA_SERVICE, sdr2_offset++);
+  /** SST (Service Statement) - EGTS_SST_IN_SERVICE */
+  sdr2.writeUInt8(0, sdr2_offset++);
+  /** SRVP (Service Parameters) */
+  sdr2.writeUInt8(0, sdr2_offset++);
+  /** SRT (Subrecord Type) - EGTS_SR_SERVICE_INFO */
+  sdr2.writeUInt8(8, sdr2_offset++);
+  /** SRL (Subrecord Length) */
+  sdr2.writeUInt16LE(3, sdr2_offset);
+  sdr2_offset += 2;
+  /** ST (Service Type) - EGTS_COMMANDS_SERVICE */
+  sdr2.writeUInt8(EGTS_COMMANDS_SERVICE, sdr2_offset++);
+  /** SST (Service Statement) - EGTS_SST_IN_SERVICE */
+  sdr2.writeUInt8(0, sdr2_offset++);
+  /** SRVP (Service Parameters) */
+  sdr2.writeUInt8(0, sdr2_offset++);
 
-  const sfrd = Buffer.concat([sdr1, sdr2]); //  SFRD - структура данных, зависящая от типа пакета и содержащая информацию протокола уровня поддержки услуг.
+  /** SFRD для пакета типа EGTS_PT_APPDATA */
+  const sfrd = Buffer.concat([sdr1, sdr2]);
+  /** SFRCS (Services Frame Data Check Sum) */
   const SFRCS = Buffer.alloc(2);
   SFRCS.writeUInt16LE(CRC16(sfrd), 0);
 
+  /** SFRD с добавленной контрольной суммой */
   const sfrdWithCRC16 = Buffer.concat([sfrd, SFRCS]);
 
-  // Заголовок пакета
+  /** Заголовок пакета, первые 11 байт */
   const header = Buffer.alloc(headerLength);
   let header_offset = 0;
-  header.writeUInt8(protocolVersion, header_offset++); // PRV (Protocol Version)
-  header.writeUInt8(0, header_offset++); // SKID (Security Key ID)
-  header.writeUInt8(0, header_offset++); // Флаги (PRF, RTE, ENA, CMP, PR)
-  header.writeUInt8(headerLength, header_offset++); // HL (Header Length) - длина заголовка транспортного уровня в байтах с учетом байта контрольной суммы (поля HCS).
-  header.writeUInt8(0, header_offset++); // HE (Header Encoding)
-  header.writeUInt16LE(sfrd.length, header_offset); // FDL (Frame Data Length) - размер в байтах поля данных SFRD, содержащего информацию протокола уровня поддержки услуг.
-  header_offset += 2;
-  header.writeUInt16LE(tracker.PID, header_offset); // PID (Packet Identifier) - Cчетик отправленных записей, начиная с 0 до 65535
-  header_offset += 2;
-  header.writeUInt8(packetType, header_offset++); // PT (Packet Type) - тип пакета транспортного уровня.
 
-  // Рассчитываем CRC8 для заголовка
+  /** PRV (Protocol Version) */
+  header.writeUInt8(protocolVersion, header_offset++);
+  /** SKID (Security Key ID) */
+  header.writeUInt8(0, header_offset++);
+  /** Флаги (PRF, RTE, ENA, CMP, PR) — все 0 */
+  header.writeUInt8(0, header_offset++);
+  /** HL (Header Length) - длина заголовка транспортного уровня в байтах с учетом байта контрольной суммы (поля HCS). */
+  header.writeUInt8(headerLength, header_offset++);
+  /** HE (Header Encoding) */
+  header.writeUInt8(0, header_offset++);
+  /** FDL (Frame Data Length) - размер в байтах поля данных SFRD, содержащего информацию протокола уровня поддержки услуг. */
+  header.writeUInt16LE(sfrd.length, header_offset);
+  header_offset += 2;
+  /** PID (Packet Identifier) - Cчетик отправленных пакетов, начиная с 0 до 65535 */
+  header.writeUInt16LE(tracker.PID, header_offset);
+  tracker.PID = (tracker.PID + 1) % 65536;
+  header_offset += 2;
+  /** PT (Packet Type) - тип пакета транспортного уровня. */
+  header.writeUInt8(packetType, header_offset++);
+  /** HCS (Header Check Sum) — Контрольная сумма заголовка */
   const headerCRC8 = CRC8(header.subarray(0, headerLength - 1));
-  header.writeUInt8(headerCRC8, header_offset); // Поле HCS - контрольная сумма заголовка Транспортного уровня (начиная с поля "PRV" до поля "HCS", не включая поле "HCS")
+  header.writeUInt8(headerCRC8, header_offset);
 
-  // Формируем финальный пакет
+  /** Финальный пакет из заголовка и данных */
   const packet = Buffer.concat([header, sfrdWithCRC16]);
 
   return packet;
