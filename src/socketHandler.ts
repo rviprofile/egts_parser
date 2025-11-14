@@ -10,7 +10,7 @@ const server = net.createServer((socket) => {
   // Инициализируем данные для нового трекера
   trackers.set(socket, {
     PID: 0, // Счетчик отправленных пакетов от сервера для каждого трекера
-    RN: 0,  // Счетчик отправленных записей от сервера для каждого трекера
+    IMEI: undefined,
   });
 
   // Обрабатываем поступающие данные
@@ -23,7 +23,11 @@ const server = net.createServer((socket) => {
         trackers: trackers,
       });
     } catch (error: any) {
-      console.error("Ошибка при разборе сообщения:", error.message);
+      console.error(
+        "[socketHandler.ts]: ",
+        "Ошибка при разборе сообщения:",
+        error.message
+      );
     }
   });
 
@@ -36,7 +40,7 @@ const server = net.createServer((socket) => {
 
   // Обрабатываем ошибки на уровне сокета
   socket.on("error", (err) => {
-    console.error("Ошибка сокета:", err.message);
+    console.error("[socketHandler.ts]: ", "Ошибка сокета:", err.message);
   });
 });
 

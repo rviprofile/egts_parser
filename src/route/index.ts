@@ -34,6 +34,11 @@ export function route({ data, socket, pid, trackers }) {
       trackers: trackers,
     });
   } else {
-    console.error(`Неизвестный тип сервиса SST: ${data.record.sst}`);
+    console.error(
+      "[route/index.ts]: ",
+      `Неизвестный тип сервиса SST: ${
+        data.record.sst
+      }. Поддерживаются следующие типы: ${Object.keys(parsers).join(", ")}`
+    );
   }
 }

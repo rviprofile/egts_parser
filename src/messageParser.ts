@@ -50,29 +50,34 @@ export function parseEGTSMessage({
     schema: ProtocolPacakgeSchema,
   });
 
-  const check = checkPT({
-    result_PT,
-    buffer,
-    flags_PT,
-  });
-  if (check) {
-    // Увеличиваем счетчик отправленных сообщений
-    trackers.get(socket)!.PID += 1;
-    const confirm = handleConfirmation(
+  if (
+    checkPT({
+      result_PT,
       buffer,
-      trackers.get(socket)?.PID || 0
-    );
-    console.log(
-      `Отправили подтверждение на пакет: ${buffer.readUInt16LE(7)}. Мой PID: ${
+      flags_PT,
+    })
+  ) {
+    try {
+      const confirm = handleConfirmation(
+        buffer,
         trackers.get(socket)?.PID || 0
-      }`
-    );
-    confirm &&
-      socketSender({
-        socket,
-        message: confirm,
-        trackers,
-      });
+      );
+      // Увеличиваем счетчик отправленных сообщений
+      trackers.get(socket)!.PID += 1;
+      confirm &&
+        socketSender({
+          socket,
+          message: confirm,
+          trackers,
+        });
+      console.log(
+        `Отправили подтверждение на пакет: ${buffer.readUInt16LE(
+          7
+        )}. Мой PID: ${trackers.get(socket)?.PID || 0}`
+      );
+    } catch (error) {
+      console.error("[messageParser.ts]: ", error);
+    }
   }
 
   /** В 9-м байте пакета содержится его тип (PT) */

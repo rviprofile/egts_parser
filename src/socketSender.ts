@@ -9,7 +9,15 @@ import { socketSenderProps } from "./types";
  *
  * */
 export function socketSender({ socket, message, trackers }: socketSenderProps) {
-  if (socket && trackers.get(socket) !== undefined) {
-    socket.write(message);
+  try {
+    if (socket && trackers.get(socket) !== undefined) {
+      socket.write(message);
+    }
+  } catch (error) {
+    console.error(
+      "[socketSender.ts]: ",
+      "Ошибка при отправке сообщения:",
+      error
+    );
   }
 }
