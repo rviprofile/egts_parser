@@ -1,16 +1,9 @@
 import { parseTermIdentity } from "./term_identity";
 import { createAuthSuccessMessage } from "./create_message";
-import net from "net";
 import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
 import { createBlockEngineCommand } from "../commands_service/create_command";
-import {
-  encodePacket,
-  prepareAnswer,
-} from "../../utils/createConfirmationResponse";
 import { termIdentityDictionary } from "./schemas";
-import { parseEGTSMessage } from "../../messageParser";
-import { EGTS_PT_APPDATA } from "../../constants";
 
 /**
  * Словарь функций-парсеров для разных подтипов подзаписей EGTS_AUTH_SERVICE.
@@ -87,23 +80,6 @@ export function parseEGTSAuthService({
       const isLogin = true;
 
       if (isLogin) {
-        /** Формируем подтверждение (EGTS_PT_RESPONSE) */
-        const response = prepareAnswer(
-          {
-            PacketType: EGTS_PT_APPDATA,
-            PacketID: pid, // переданный в props идентификатор пакета
-          } as any, // остальное prepareAnswer не использует
-          pid + 1 // можно использовать новый ID для ответа
-        );
-
-        const bufferToSend = encodePacket(response);
-        socketSender({
-          socket,
-          message: bufferToSend,
-          trackers,
-        });
-        console.log("[Auth Service]: EGTS_PT_RESPONSE отправлен ✅");
-        
         /** Готовое сообщение "успешной авторизации" (EGTS_AUTH_SERVICE response) */
         const success: Buffer = createAuthSuccessMessage({
           socket: socket,
@@ -115,22 +91,25 @@ export function parseEGTSAuthService({
           message: success,
           trackers: trackers,
         });
-        console.log("Отправили ответ на сообщение авторизации");
-        const command = createBlockEngineCommand({
-          socket: socket,
-          trackers: trackers,
-        });
-        setTimeout(() => {
-          console.log(
-            "\x1b[34mОтправили команду о блокировке\x1b[0m",
-            command.toString("hex")
-          );
-          socketSender({
-            socket: socket,
-            message: command,
-            trackers: trackers,
-          });
-        }, 5000);
+        console.log(
+          "Отправили сообщение об успешной авторизации с запросом телеметрии"
+        );
+
+        // const command = createBlockEngineCommand({
+        //   socket: socket,
+        //   trackers: trackers,
+        // });
+        // setTimeout(() => {
+        //   console.log(
+        //     "\x1b[34mОтправили команду о блокировке\x1b[0m",
+        //     command.toString("hex")
+        //   );
+        //   socketSender({
+        //     socket: socket,
+        //     message: command,
+        //     trackers: trackers,
+        //   });
+        // }, 5000);
       }
     } else {
       console.log(

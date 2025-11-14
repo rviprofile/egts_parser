@@ -1,4 +1,3 @@
-import net from "net";
 import { SFRD_parser } from "./parsers/SFRD_parser";
 import { route } from "./route";
 import {
@@ -10,14 +9,9 @@ import { parseFlags } from "./utils/flags_parser";
 import { PacketTypeCodes } from "./utils/decribe-pt";
 import { consoleTablePT } from "./utils/consoleTablePT";
 import { checkPT } from "./utils/checkPT";
-import { processingResultCodes } from "./processingResultCodes";
-import {
-  encodePacket,
-  prepareAnswer,
-} from "./utils/createConfirmationResponse";
-import { EGTS_PT_APPDATA } from "./constants";
-import { socketSender } from "./socketSender";
 import { parseEGTSMessageProps } from "./types";
+import { handleConfirmation } from "./utils/createConfirmationResponse";
+import { socketSender } from "./socketSender";
 
 /**
  * Разбирает и обрабатывает входящее сообщение по протоколу EGTS.
@@ -56,31 +50,34 @@ export function parseEGTSMessage({
     schema: ProtocolPacakgeSchema,
   });
 
-  checkPT({
+  const check = checkPT({
     result_PT,
     buffer,
     flags_PT,
   });
+  if (check) {
+    // Увеличиваем счетчик отправленных сообщений
+    trackers.get(socket)!.PID += 1;
+    const confirm = handleConfirmation(
+      buffer,
+      trackers.get(socket)?.PID || 0
+    );
+    console.log(
+      `Отправили подтверждение на пакет: ${buffer.readUInt16LE(7)}. Мой PID: ${
+        trackers.get(socket)?.PID || 0
+      }`
+    );
+    confirm &&
+      socketSender({
+        socket,
+        message: confirm,
+        trackers,
+      });
+  }
 
   /** В 9-м байте пакета содержится его тип (PT) */
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {
     case "EGTS_PT_APPDATA": {
-      /** Формируем подтверждение (EGTS_PT_RESPONSE) */
-      const response = prepareAnswer(
-        {
-          PacketType: EGTS_PT_APPDATA,
-          PacketID: buffer.readUInt16LE(7), // переданный в props идентификатор пакета
-        } as any, // остальное prepareAnswer не использует
-        buffer.readUInt16LE(7) + 1 // можно использовать новый ID для ответа
-      );
-
-      const bufferToSend = encodePacket(response);
-      socketSender({
-        socket,
-        message: bufferToSend,
-        trackers,
-      });
-      console.log("[Teledata Service]: EGTS_PT_RESPONSE отправлен ✅");
       /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
       let currentOffset = buffer.readUInt8(3);
       // Пока смещение меньше, чем длинна буфера минус контрольная сумма (последние 2 байта)

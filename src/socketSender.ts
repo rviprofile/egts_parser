@@ -1,4 +1,3 @@
-import net from "net";
 import { socketSenderProps } from "./types";
 
 /**
@@ -11,9 +10,6 @@ import { socketSenderProps } from "./types";
  * */
 export function socketSender({ socket, message, trackers }: socketSenderProps) {
   if (socket && trackers.get(socket) !== undefined) {
-    // Увеличиваем счетчик отправленных сообщений
-    trackers.get(socket)!.PID += 1;
-
     socket.write(message);
   }
 }

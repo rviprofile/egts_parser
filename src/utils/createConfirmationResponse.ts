@@ -2,30 +2,28 @@ import { EGTS_PT_APPDATA, EGTS_PT_RESPONSE } from "../constants";
 import { CRC16 } from "./crc16";
 import { CRC8 } from "./crc8";
 
-/**
- * EGTS Packet structure
- */
 export interface Packet {
-  ProtocolVersion: number; // PRV
-  SecurityKeyID: number; // SKID
-  PRF: string; // Prefix
-  RTE: string; // Route flag
-  ENA: string; // Encryption
-  CMP: string; // Compression
-  PR: string; // Priority
+  ProtocolVersion: number;
+  SecurityKeyID: number;
+  PRF: string;
+  RTE: string;
+  ENA: string;
+  CMP: string;
+  PR: string;
 
-  HeaderLength: number; // HL
-  HeaderEncoding: number; // HE
-  FrameDataLength: number; // FDL
-  PacketID: number; // PID
-  PacketType: number; // PT
-  HeaderCheckSum: number; // HCS
-  ServicesFrameData?: Buffer; // SFRD
-  ServicesFrameDataCheckSum?: number; // SFRCS
+  HeaderLength: number;
+  HeaderEncoding: number;
+  FrameDataLength: number;
+  PacketID: number;
+  PacketType: number;
+  HeaderCheckSum: number;
+
+  ServicesFrameData?: Buffer;
+  ServicesFrameDataCheckSum?: number;
 }
 
 /**
- * Read incoming EGTS packet
+ * ---------- 1. Разбор входящего пакета ----------
  */
 export function readPacket(buffer: Buffer): Packet {
   const p: Packet = {
@@ -44,9 +42,9 @@ export function readPacket(buffer: Buffer): Packet {
     HeaderCheckSum: 0,
   };
 
-  // --- Flags ---
   const flags = buffer.readUInt8(2);
   const bits = flags.toString(2).padStart(8, "0");
+
   p.PRF = bits.slice(0, 2);
   p.RTE = bits.slice(2, 3);
   p.ENA = bits.slice(3, 5);
@@ -66,16 +64,18 @@ export function readPacket(buffer: Buffer): Packet {
     throw new Error(`Header CRC mismatch: ${hcsCalc} != ${p.HeaderCheckSum}`);
   }
 
-  // --- Читаем данные ---
-  const sfrdStart = p.HeaderLength;
-  const sfrdEnd = sfrdStart + p.FrameDataLength;
-  p.ServicesFrameData = buffer.subarray(sfrdStart, sfrdEnd);
+  // SFRD
+  const start = p.HeaderLength;
+  const end = start + p.FrameDataLength;
 
-  p.ServicesFrameDataCheckSum = buffer.readUInt16LE(sfrdEnd);
-  const sfrcsCalc = CRC16(p.ServicesFrameData);
-  if (sfrcsCalc !== p.ServicesFrameDataCheckSum) {
+  p.ServicesFrameData = buffer.subarray(start, end);
+  p.ServicesFrameDataCheckSum = buffer.readUInt16LE(end);
+
+  // CRC16
+  const dataCrc = CRC16(p.ServicesFrameData);
+  if (dataCrc !== p.ServicesFrameDataCheckSum) {
     throw new Error(
-      `Data CRC mismatch: ${sfrcsCalc} != ${p.ServicesFrameDataCheckSum}`
+      `Data CRC mismatch: ${dataCrc} != ${p.ServicesFrameDataCheckSum}`
     );
   }
 
@@ -83,7 +83,7 @@ export function readPacket(buffer: Buffer): Packet {
 }
 
 /**
- * Encode EGTS_PT_RESPONSE packet
+ * ---------- 2. Кодирование ответа ----------
  */
 export function encodePacket(p: Packet): Buffer {
   const header: number[] = [];
@@ -91,10 +91,8 @@ export function encodePacket(p: Packet): Buffer {
   header.push(p.ProtocolVersion);
   header.push(p.SecurityKeyID);
 
-  // Flags
   const flagBits = p.PRF + p.RTE + p.ENA + p.CMP + p.PR;
-  const flagByte = parseInt(flagBits, 2);
-  header.push(flagByte);
+  header.push(parseInt(flagBits, 2));
 
   header.push(p.HeaderLength);
   header.push(p.HeaderEncoding);
@@ -109,7 +107,6 @@ export function encodePacket(p: Packet): Buffer {
 
   header.push(p.PacketType);
 
-  // CRC8
   const hcs = CRC8(Buffer.from(header));
   header.push(hcs);
 
@@ -121,19 +118,19 @@ export function encodePacket(p: Packet): Buffer {
 }
 
 /**
- * Prepare confirmation for incoming APPDATA packet
+ * ---------- 3. Формирование ответа на APPDATA ----------
+ * сюда передаёшь правильный RECORD_ID (если он у тебя есть извне)
  */
-export function prepareAnswer(incoming: Packet, pid: number): Packet {
-  if (incoming.PacketType !== EGTS_PT_APPDATA) {
-    throw new Error("prepareAnswer: not APPDATA packet");
-  }
+export function createAppdataConfirmation(
+  recordId: number,
+  responsePid: number
+): Buffer {
+  // 3 байта — RPID + ProcessingResult
+  const body = Buffer.alloc(3);
+  body.writeUInt16LE(recordId, 0);
+  body.writeUInt8(0, 2); // EGTS_PC_OK
 
-  // EGTS_PT_RESPONSE: только RPID и PR
-  const response = Buffer.alloc(3);
-  response.writeUInt16LE(incoming.PacketID, 0); // RPID
-  response.writeUInt8(0, 2); // PR = EGTS_PC_OK
-
-  const packet: Packet = {
+  const p: Packet = {
     ProtocolVersion: 1,
     SecurityKeyID: 0,
     PRF: "00",
@@ -141,14 +138,35 @@ export function prepareAnswer(incoming: Packet, pid: number): Packet {
     ENA: "00",
     CMP: "0",
     PR: "11",
+
     HeaderLength: 11,
     HeaderEncoding: 0,
-    FrameDataLength: response.length,
-    PacketID: pid,
+    FrameDataLength: body.length,
+    PacketID: responsePid,
     PacketType: EGTS_PT_RESPONSE,
     HeaderCheckSum: 0,
-    ServicesFrameData: response,
+
+    ServicesFrameData: body,
   };
 
-  return packet;
+  return encodePacket(p);
+}
+
+/**
+ * ---------- 4. Универсальная функция ----------
+ * ты даёшь ему буфер от трекера → он даёт готовый буфер-ответ
+ */
+export function handleConfirmation(
+  buffer: Buffer,
+  responsePid: number
+): Buffer | null {
+  const pkt = readPacket(buffer);
+
+  // Если пакет — APPDATA, формируем подтверждение
+  if (pkt.PacketType === EGTS_PT_APPDATA) {
+    return createAppdataConfirmation(buffer.readUInt16LE(7), responsePid);
+  }
+
+  // на другие типы пакетов можно возвращать null или другое поведение
+  return null;
 }

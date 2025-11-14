@@ -1,13 +1,10 @@
 import { describePacketFields, PacketTypeCodes } from "./decribe-pt";
-
-/** Функция выводит результат парсинга в консоль */
-export const consoleTablePT = ({
-  result_PT,
-  buffer,
-  schema,
-}: {
+type consoleTablePTProps = {
+  /** Результат парсинга пакета */
   result_PT: { [key: string]: any };
+  /** Буфер с данными пакета */
   buffer: Buffer;
+  /** Схема пакета */
   schema: {
     [key: string]: {
       length?: number;
@@ -16,7 +13,15 @@ export const consoleTablePT = ({
       dynamic?: string;
     };
   };
-}) => {
+};
+/**
+ * Функция выводит результат парсинга пакета в консоль.
+ */
+export const consoleTablePT = ({
+  result_PT,
+  buffer,
+  schema,
+}: consoleTablePTProps) => {
   /** Массив для вывода в таблице */
   let result_PT_table: any = [];
   /** Формирование читаемой таблицы данных */
