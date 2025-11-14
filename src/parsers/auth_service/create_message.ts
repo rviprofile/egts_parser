@@ -134,7 +134,6 @@ export function createAuthSuccessMessage({ socket, trackers }) {
   header_offset += 2;
   /** PID (Packet Identifier) - Cчетик отправленных пакетов, начиная с 0 до 65535 */
   header.writeUInt16LE(tracker.PID, header_offset);
-  tracker.PID = (tracker.PID + 1) % 65536;
   header_offset += 2;
   /** PT (Packet Type) - тип пакета транспортного уровня. */
   header.writeUInt8(packetType, header_offset++);

@@ -12,6 +12,7 @@ export function socketSender({ socket, message, trackers }: socketSenderProps) {
   try {
     if (socket && trackers.get(socket) !== undefined) {
       socket.write(message);
+      trackers.get(socket)!.PID = (trackers.get(socket)!.PID + 1) % 65536;
     }
   } catch (error) {
     console.error(

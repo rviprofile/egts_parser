@@ -85,31 +85,35 @@ export function parseEGTSAuthService({
           socket: socket,
           trackers: trackers,
         });
+        console.log(
+          `\x1b[34mОтправили сообщение об успешной авторизации с запросом телеметрии. PID: ${
+            trackers.get(socket)?.PID || 0
+          }\x1b[0m`
+        );
         // Отправляем это сообщение через TCP-сокет обратно трекеру
         socketSender({
           socket: socket,
           message: success,
           trackers: trackers,
         });
-        console.log(
-          "Отправили сообщение об успешной авторизации с запросом телеметрии"
-        );
 
-        // const command = createBlockEngineCommand({
-        //   socket: socket,
-        //   trackers: trackers,
-        // });
-        // setTimeout(() => {
-        //   console.log(
-        //     "\x1b[34mОтправили команду о блокировке\x1b[0m",
-        //     command.toString("hex")
-        //   );
-        //   socketSender({
-        //     socket: socket,
-        //     message: command,
-        //     trackers: trackers,
-        //   });
-        // }, 5000);
+        const command = createBlockEngineCommand({
+          socket: socket,
+          trackers: trackers,
+        });
+        setTimeout(() => {
+          console.log(
+            `\x1b[34mОтправили команду о блокировке. PID: ${
+              trackers.get(socket)?.PID || 0
+            }\x1b[0m`,
+            command.toString("hex")
+          );
+          socketSender({
+            socket: socket,
+            message: command,
+            trackers: trackers,
+          });
+        }, 5000);
       }
     } else {
       console.log(

@@ -51,38 +51,37 @@ export function parseEGTSMessage({
   });
 
   if (
-    checkPT({
+    !checkPT({
       result_PT,
       buffer,
       flags_PT,
     })
   ) {
-    try {
-      const confirm = handleConfirmation(
-        buffer,
-        trackers.get(socket)?.PID || 0
-      );
-      // Увеличиваем счетчик отправленных сообщений
-      trackers.get(socket)!.PID += 1;
-      confirm &&
-        socketSender({
-          socket,
-          message: confirm,
-          trackers,
-        });
-      console.log(
-        `Отправили подтверждение на пакет: ${buffer.readUInt16LE(
-          7
-        )}. Мой PID: ${trackers.get(socket)?.PID || 0}`
-      );
-    } catch (error) {
-      console.error("[messageParser.ts]: ", error);
-    }
+    return;
   }
 
   /** В 9-м байте пакета содержится его тип (PT) */
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {
     case "EGTS_PT_APPDATA": {
+      try {
+        const confirm = handleConfirmation(
+          buffer,
+          trackers.get(socket)?.PID || 0
+        );
+        console.log(
+          `\x1b[34mОтправили подтверждение на пакет: ${buffer.readUInt16LE(
+            7
+          )}. Мой PID: ${trackers.get(socket)?.PID || 0}\x1b[0m`
+        );
+        confirm &&
+          socketSender({
+            socket,
+            message: confirm,
+            trackers,
+          });
+      } catch (error) {
+        console.error("[messageParser.ts]: ", error);
+      }
       /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
       let currentOffset = buffer.readUInt8(3);
       // Пока смещение меньше, чем длинна буфера минус контрольная сумма (последние 2 байта)
