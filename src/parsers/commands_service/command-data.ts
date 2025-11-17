@@ -1,29 +1,28 @@
-import {
-  termIdentityDictionary,
-  termIdentityFlagSchema,
-  termIdentityFlagsDictionary,
-  termIdentitySchema,
-} from "./schemas";
-import { parseRecordWithSchema } from "../../utils/schemaParser";
-import { parseFlags } from "../../utils/flags_parser"; // Парсер для флагов
 import { consoleTableFlags } from "../../utils/consoleTableFlags";
-
-export function parseTermIdentity(buffer: Buffer) {
+import { parseFlags } from "../../utils/flags_parser";
+import { parseRecordWithSchema } from "../../utils/schemaParser";
+import {
+  commandDataFlagSchema,
+  commandDataFlagsDictionary,
+  commandDataSchema,
+  commandDataSchemaDictionary,
+} from "./schemas";
+export function parseCommandData(buffer: Buffer) {
   const flagsByte = Buffer.from([buffer.readUInt8(4)]); // Извлекаем байт с флагами
   const flags = parseFlags({
     flagsByte: flagsByte,
-    flagSchema: termIdentityFlagSchema,
+    flagSchema: commandDataFlagSchema,
   }); // Парсим флаги по схеме
 
   consoleTableFlags({
     flags,
-    title: "AUTH flags",
-    dictionary: termIdentityFlagsDictionary,
+    title: "COMMAND flags",
+    dictionary: commandDataFlagsDictionary,
   });
 
   const result = parseRecordWithSchema({
     buffer: buffer,
-    schema: termIdentitySchema,
+    schema: commandDataSchema,
     flags: flags,
   });
 
@@ -31,11 +30,11 @@ export function parseTermIdentity(buffer: Buffer) {
   const result_table: any = [];
   Object.keys(result).map((key) => {
     result_table.push({
-      AUTH: termIdentityDictionary[key],
+      AUTH: commandDataSchemaDictionary[key],
       value: result[key],
     });
   });
   console.table(result_table);
-  
+
   return result; // Возвращаем результат парсинга
 }

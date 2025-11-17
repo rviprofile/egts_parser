@@ -1,0 +1,23 @@
+import { parseRecordWithSchema } from "../../utils/schemaParser";
+import {
+  recordResponseSchema,
+  recordResponseSchemaDictionary,
+} from "./schemas";
+
+export function parseRecordResponse(buffer: Buffer) {
+  const result = parseRecordWithSchema({
+    buffer: buffer,
+    schema: recordResponseSchema,
+  });
+
+  /** Таблица c результатом в консоль */
+  const result_table: any = [];
+  Object.keys(result).map((key) => {
+    result_table.push({
+      AUTH: recordResponseSchemaDictionary[key],
+      value: result[key],
+    });
+  });
+  console.table(result_table);
+  return result;
+}

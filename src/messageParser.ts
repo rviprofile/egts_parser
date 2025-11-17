@@ -63,6 +63,7 @@ export function parseEGTSMessage({
   /** В 9-м байте пакета содержится его тип (PT) */
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {
     case "EGTS_PT_APPDATA": {
+      /** Подтверждение пакета APPDATA */
       try {
         const confirm = handleConfirmation(
           buffer,
@@ -82,6 +83,7 @@ export function parseEGTSMessage({
       } catch (error) {
         console.error("[messageParser.ts]: ", error);
       }
+
       /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
       let currentOffset = buffer.readUInt8(3);
       // Пока смещение меньше, чем длинна буфера минус контрольная сумма (последние 2 байта)
@@ -140,5 +142,7 @@ export function parseEGTSMessage({
       });
       break;
     }
+    case "EGTS_PT_SIGNED_APPDATA":
+      return;
   }
 }

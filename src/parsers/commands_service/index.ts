@@ -1,4 +1,25 @@
 import { parseServiseProps } from "../../types";
+import { parseTermIdentity } from "../auth_service/term_identity";
+import { parseCommandData } from "./command-data";
+import { parseRecordResponse } from "./record-response";
+import {
+  recordResponseSchema,
+  recordResponseSchemaDictionary,
+} from "./schemas";
+
+/** Cписок подзаписей сервиса EGTS_COMMAND_SERVICE */
+const subrecordParsers = {
+  /**
+   * EGTS_SR_RECORD_RESPONSE — Подзапись применяется для подтверждения процесса обработки записи протокола уровня
+   * поддержки услуг. Данный тип подзаписи должен поддерживаться всеми сервисами
+   */
+  0: parseRecordResponse,
+  /**
+   * EGTS_SR_COMMAND_DATA — Подзапись используется АСН и ТП для передачи команд, информационных сообщений,
+   * подтверждений доставки, подтверждений выполнения команд, подтверждения прочтения сообщений и т.п.
+   */
+  51: parseCommandData,
+};
 
 export function parseEGTSCommandsService({
   record,
@@ -8,39 +29,31 @@ export function parseEGTSCommandsService({
 }: parseServiseProps) {
   let offset = 0;
 
+  // Пока не дошли до конца буфера записи
   while (offset < record.length) {
-    // --- Заголовок подзаписи ---
+    /** 1 байт — тип подзаписи (Subrecord Type) */
     const subrecordType = record.readUInt8(offset);
+    /** 2 байта (младший порядок) — длина подзаписи (Subrecord Length) */
     const subrecordLength = record.readUInt16LE(offset + 1);
+    /** Содержимое подзаписи */
     const subrecordData = record.subarray(
       offset + 3,
       offset + 3 + subrecordLength
     );
 
-    offset += 3 + subrecordLength; // Переходим к следующей подзаписи
+    // Сдвигаем смещение к следующей подзаписи
+    offset += 3 + subrecordLength;
 
-    console.log("COMMAND_SERVICE SRT: ", subrecordType);
-    console.log("COMMAND_SERVICE SRL: ", subrecordLength);
-
-    // --- Расшифровка SRD для команд ---
-    if (subrecordLength >= 3) {
-      const CT = subrecordData.readUInt8(0); // Command Type
-      const CCT = subrecordData.readUInt8(1); // Command Confirmation Type
-      const param = subrecordData.readUInt8(2); // Параметр команды (битовое поле выходов)
-
-      console.log("COMMAND_SERVICE SRD: ", subrecordData);
-      console.log("CT (Command Type): 0x" + CT.toString(16));
-      console.log("CCT (Confirmation Type): 0x" + CCT.toString(16));
-      console.log(
-        "Command Data (outputs bits): 0b" + param.toString(2).padStart(8, "0")
-      );
-
-      // Дополнительно можно проверять, какая команда и какой выход
-      if (CT === 0x09) console.log("EGTS_FLEET_DOUT_ON");
-      if (CT === 0x0a) console.log("EGTS_FLEET_DOUT_OFF");
-      if (CT === 0x0b) console.log("EGTS_FLEET_GET_DOUT_DATA");
+    /** Зарегистрированный парсер для данного типа подзаписи */
+    const parserFn = subrecordParsers[subrecordType];
+    // Если парсер найден
+    if (parserFn) {
+      /** Результат расшифровки содержимого подзаписи */
+      const result = parserFn(subrecordData);
     } else {
-      console.log("COMMAND_SERVICE SRD too short for parsing");
+      console.log(
+        `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
+      );
     }
   }
 }

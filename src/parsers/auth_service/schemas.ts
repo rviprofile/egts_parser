@@ -1,3 +1,5 @@
+import { SchemaType } from "../../types";
+
 /** Схема флагов подзаписи EGTS_SR_TERM_IDENTITY сервиса EGTS_AUTH_SERVICE */
 export const termIdentityFlagSchema: {
   [key: string]: {
@@ -42,13 +44,7 @@ export const termIdentityFlagSchema: {
 };
 
 /** Схема подзаписи EGTS_SR_TERM_IDENTITY сервиса EGTS_AUTH_SERVICE */
-export const termIdentitySchema: {
-  [key: string]: {
-    length: number;
-    type: string;
-    flag?: string;
-  };
-} = {
+export const termIdentitySchema: SchemaType = {
   /**
    * TID (Terminal Identifier) — уникальный идентификатор, назначаемый при программировании АСН.
    */
@@ -99,7 +95,7 @@ export const termIdentitySchema: {
    * При невозможности определения данного параметра устройство
    * должно заполнять данное поле значением 0 во всех 15 символах
    */
-  MSISDN: { type: "String", length: 15, flag: "mne" }, 
+  MSISDN: { type: "String", length: 15, flag: "mne" },
 };
 
 export const termIdentityFlagsDictionary = {
@@ -123,4 +119,14 @@ export const termIdentityDictionary = {
   NID: "NID (Network Identifier)",
   BS: "BS (Buffer Size)",
   MSISDN: "MSISDN (Mobile Station Integrated Services Digital Network Number)",
+};
+
+export const recordResponseSchema: SchemaType = {
+  crn: { type: "UInt16LE", length: 2 },
+  rst: { type: "UInt8", length: 1 },
+};
+
+export const recordResponseDictionary = {
+  crn: "CRN (Confirmed Record Number)",
+  rst: "RST (Record Status)",
 };

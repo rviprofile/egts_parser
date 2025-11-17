@@ -2,8 +2,8 @@ import { parseTermIdentity } from "./term_identity";
 import { createAuthSuccessMessage } from "./create_message";
 import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
-import { createBlockEngineCommand } from "../commands_service/create_command";
-import { termIdentityDictionary } from "./schemas";
+import { createCommand } from "../commands_service/create_command";
+import { parseRecordResponse } from "./record-response";
 
 /**
  * Словарь функций-парсеров для разных подтипов подзаписей EGTS_AUTH_SERVICE.
@@ -12,6 +12,7 @@ import { termIdentityDictionary } from "./schemas";
  * Тип 0 - специальный, зарезервирован за подзаписью подтверждения данных для каждого сервиса.
  */
 const subrecordParsers = {
+  0: parseRecordResponse, // EGTS_SR_RECORD_RESPONSE
   1: parseTermIdentity, // EGTS_SR_TERM_IDENTITY
   // 2: EGTS_SR_MODULE_DATA
   // 3: EGTS_SR_VEHICLE_DATA
@@ -46,7 +47,6 @@ export function parseEGTSAuthService({
       offset + 3,
       offset + 3 + subrecordLength
     );
-
     // Сдвигаем смещение к следующей подзаписи
     offset += 3 + subrecordLength;
 
@@ -57,16 +57,6 @@ export function parseEGTSAuthService({
     if (parserFn) {
       /** Результат расшифровки содержимого подзаписи */
       const result = parserFn(subrecordData);
-
-      /** Таблица c результатом в консоль */
-      const result_table: any = [];
-      Object.keys(result).map((key) => {
-        result_table.push({
-          AUTH: termIdentityDictionary[key],
-          value: result[key],
-        });
-      });
-      console.table(result_table);
 
       // Получаем текущее состояние трекера, привязанного к этому сокету
       const currentData = trackers.get(socket) || {};
@@ -79,7 +69,7 @@ export function parseEGTSAuthService({
       // --- Этап проверки логина (в реальности тут должен быть запрос в базу данных) ---
       const isLogin = true;
 
-      if (isLogin) {
+      if (isLogin && subrecordType === 1) {
         /** Готовое сообщение "успешной авторизации" (EGTS_AUTH_SERVICE response) */
         const success: Buffer = createAuthSuccessMessage({
           socket: socket,
@@ -97,13 +87,17 @@ export function parseEGTSAuthService({
           trackers: trackers,
         });
 
-        const command = createBlockEngineCommand({
-          socket: socket,
-          trackers: trackers,
+        const command = createCommand({
+          address: 1,
+          act: 2, // установка значения
+          command_code: 0x0009, // EGTS_FLEET_DOUT_ON
+          data: Buffer.from([0x01, 0x00]), // bit 0 => ON
+          socket,
+          trackers,
         });
         setTimeout(() => {
           console.log(
-            `\x1b[34mОтправили команду о блокировке. PID: ${
+            `\x1b[34mОтправили команду. PID: ${
               trackers.get(socket)?.PID || 0
             }\x1b[0m`,
             command.toString("hex")

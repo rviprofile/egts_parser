@@ -2,15 +2,68 @@ import { CRC8 } from "../../utils/crc8";
 import { CRC16 } from "../../utils/crc16";
 import { EGTS_COMMANDS_SERVICE, EGTS_PT_APPDATA } from "../../constants";
 
-export function createBlockEngineCommand({ socket, trackers }) {
-  function createFleetDoutOffCommand(outputs: number): Buffer {
-    const commandCode = 0x000a; // Код команды EGTS_FLEET_DOUT_OFF
-    const commandBuffer = Buffer.alloc(4); // 4 байта (2 на код, 2 на параметр)
+export function createCommand({
+  socket,
+  trackers,
+  address,
+  act,
+  command_code,
+  data,
+}) {
+  function createCommandData({
+    address,
+    act = 0,
+    ccd,
+    data,
+    size = 0,
+  }: {
+    address: number;
+    act?: number;
+    ccd: number;
+    data?: Buffer;
+    size?: number;
+  }): Buffer {
+    // Вычисляем SZ/ACT байт
+    // SZ занимает биты 2..7, ACT — биты 0..1
+    const SZ = act === 3 ? size : 0;
+    const SZ_ACT = (SZ << 2) | (act & 0b11);
 
-    commandBuffer.writeUInt16BE(commandCode, 0); // Код команды
-    commandBuffer.writeUInt16BE(outputs, 2); // Битовое поле выходов
+    // DT требуется только при ACT 2 и 3
+    const DT = (act === 2 || act === 3) && data ? data : Buffer.alloc(0);
 
-    return commandBuffer;
+    let commandDataBuffer: Buffer = Buffer.alloc(2 + 1 + 2 + DT.length);
+    let command_offset = 0;
+    /**
+     * ADR (Address) - адрес модуля, для которого данная команда предназначена. Адрес
+     * определяют, исходя из начальной конфигурации АСН или из списка модулей, который
+     * может быть получен при регистрации терминала через сервис EGTS_AUTH_SERVICE и
+     * передачи подзаписей EGTS_SR_MODULE_DATA
+     */
+    commandDataBuffer.writeUInt16LE(address, command_offset);
+    command_offset += 2;
+    /**
+     * SZ (Size) - объем памяти для параметра (используется совместно с действием ACT=3).
+     * При добавлении нового параметра в АСН, данное поле определяет, что для нового
+     * параметра требуется 2(SZ) байт памяти в АСН и ACT (Action)
+     *
+     * ACT (Action) - описание действия, используемое в случае типа команды
+     * (поле CT = T_COM подзаписи EGTS_SR_COMMAND_DATA).
+     * 0 - параметры передаваемой команды, которая задается кодом из поля CCD,
+     * 1 - запрос значения. Используется для запроса информации, хранящейся в АСН.
+     * Запрашиваемый параметр определяется кодом из поля CCD,
+     * 2 - установка значения. Используется для установки нового значения определенному
+     * параметру в АСН. Устанавливаемый параметр определяется кодом из поля CCD, а его значение полем DT,
+     * 3 - добавление нового параметра в АСН. Код нового параметра указывается в поле CCD,
+     * его тип в поле SZ, а значение в поле DT,
+     * 4 - удаление имеющегося параметра из АСН. Код удаляемого параметра указывается в поле CCD.
+     */
+    commandDataBuffer.writeUInt8(SZ_ACT, command_offset++);
+    /** CCD (Command Code) - код команды при ACT=0 */
+    commandDataBuffer.writeUInt16LE(ccd, command_offset);
+    command_offset += 2;
+
+    DT.copy(commandDataBuffer, command_offset);
+    return commandDataBuffer;
   }
   /** PRV (Protocol Version) — содержит значение 0x01*/
   const protocolVersion = 1;
@@ -81,23 +134,27 @@ export function createBlockEngineCommand({ socket, trackers }) {
   sdr1_offset += 4;
 
   /**
-   * ACFE and CHSFE
-   * 0 = поля ACL и AC отсутствуют в подзаписи
-   * 0 = поле CHS отсутствует в подзаписи.
+   * ACFE + CHSFE
+   * bit1 = ACFE = 1 (есть ACL и AC)
+   * bit0 = CHSFE = 0 (CHS отсутствует)
+   * → 0b00000010 = 0x02
    */
-  sdr1.writeUInt8(0, sdr1_offset++);
+  sdr1.writeUInt8(0x02, sdr1_offset++);
 
-  /** ACL (Authorization Code Length) */
+  /** ACL (Authorization Code Length) — длина поля AC в байтах */
   sdr1.writeUInt8(2, sdr1_offset++);
 
   /** AC (Authorization Code) */
-  const ACBuffer = Buffer.alloc(2);
-  ACBuffer.writeUInt16BE(AuthCode, 0); // или UInt16LE в зависимости от протокола
-  sdr1.set(ACBuffer, sdr1_offset);
-  sdr1_offset += ACBuffer.length;
+  sdr1.writeUInt16LE(AuthCode, sdr1_offset);
+  sdr1_offset += 2;
 
   /** CD (Command Data) - тело команды */
-  const CCD = createFleetDoutOffCommand(0b0001);
+  const CCD = createCommandData({
+    address,
+    ccd: command_code,
+    data,
+    act,
+  });
   sdr1.set(CCD, sdr1_offset);
   sdr1_offset += CCD.length;
 

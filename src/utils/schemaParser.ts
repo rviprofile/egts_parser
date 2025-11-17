@@ -4,7 +4,7 @@ import iconv from "iconv-lite";
 type parseRecordWithSchemaProps = {
   buffer: Buffer;
   schema: SchemaType;
-  flags: { [flagName: string]: number };
+  flags?: { [flagName: string]: number };
 };
 
 /**
@@ -31,7 +31,7 @@ export function parseRecordWithSchema({
     { type, length, flag, dynamic, connection },
   ] of Object.entries(schema)) {
     // Если поле зависит от флага, проверяем значение флага
-    if (flag && flags[flag] === 0) {
+    if (flags && flag && flags[flag] === 0) {
       continue; // Пропускаем поле, если флаг отключен
     }
     /** Длинна поля */
