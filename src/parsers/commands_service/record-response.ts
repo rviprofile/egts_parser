@@ -14,7 +14,7 @@ export function parseRecordResponse(buffer: Buffer) {
   const result_table: any = [];
   Object.keys(result).map((key) => {
     result_table.push({
-      AUTH: recordResponseSchemaDictionary[key],
+      COMMAND: recordResponseSchemaDictionary[key],
       value: result[key],
     });
   });

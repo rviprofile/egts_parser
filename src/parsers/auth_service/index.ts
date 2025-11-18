@@ -4,6 +4,10 @@ import { socketSender } from "../../socketSender";
 import { parseServiseProps } from "../../types";
 import { createCommand } from "../commands_service/create_command";
 import { parseRecordResponse } from "./record-response";
+import {
+  EGTS_SR_RECORD_RESPONSE,
+  EGTS_SR_TERM_IDENTITY,
+} from "../../constants";
 
 /**
  * Словарь функций-парсеров для разных подтипов подзаписей EGTS_AUTH_SERVICE.
@@ -12,8 +16,8 @@ import { parseRecordResponse } from "./record-response";
  * Тип 0 - специальный, зарезервирован за подзаписью подтверждения данных для каждого сервиса.
  */
 const subrecordParsers = {
-  0: parseRecordResponse, // EGTS_SR_RECORD_RESPONSE
-  1: parseTermIdentity, // EGTS_SR_TERM_IDENTITY
+  [EGTS_SR_RECORD_RESPONSE]: parseRecordResponse,
+  [EGTS_SR_TERM_IDENTITY]: parseTermIdentity,
   // 2: EGTS_SR_MODULE_DATA
   // 3: EGTS_SR_VEHICLE_DATA
   // 5: EGTS_SR_DISPATCHER_IDENTITY
@@ -72,8 +76,7 @@ export function parseEGTSAuthService({
       if (isLogin && subrecordType === 1) {
         /** Готовое сообщение "успешной авторизации" (EGTS_AUTH_SERVICE response) */
         const success: Buffer = createAuthSuccessMessage({
-          socket: socket,
-          trackers: trackers,
+          tracker: trackers.get(socket),
         });
         console.log(
           `\x1b[34mОтправили сообщение об успешной авторизации с запросом телеметрии. PID: ${
@@ -88,12 +91,19 @@ export function parseEGTSAuthService({
         });
 
         const command = createCommand({
-          address: 1,
-          act: 2, // установка значения
-          command_code: 0x0009, // EGTS_FLEET_DOUT_ON
-          data: Buffer.from([0x01, 0x00]), // bit 0 => ON
-          socket,
-          trackers,
+          /** ADR (Address) - адрес модуля, для которого данная команда предназначена. */
+          address: 0x0000,
+
+          /**
+           * ACT (Action) - описание действия, используемое в случае типа команды.
+           * 0 - параметры передаваемой команды, которая задается кодом из поля CCD.
+           * 2 - установка значения. Используется для установки нового значения определенному
+           * параметру в АСН. Устанавливаемый параметр определяется кодом из поля CCD, а его
+           * значение полем DT */
+          act: 0,
+          command_code: 0x000d, // EGTS_FLEET_GET_SENSORS_DATA
+          data: Buffer.from([0x01]),
+          tracker: trackers.get(socket),
         });
         setTimeout(() => {
           console.log(

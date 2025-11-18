@@ -19,3 +19,6 @@ export const EGTS_SR_AUTH_PARAMS = 6;
 export const EGTS_SR_AUTH_INFO = 7;
 export const EGTS_SR_SERVICE_INFO = 8;
 export const EGTS_SR_RESULT_CODE = 9;
+
+// Типы подзаписей для EGTS_COMMANDS_SERVICE
+export const EGTS_SR_COMMAND_DATA = 51;

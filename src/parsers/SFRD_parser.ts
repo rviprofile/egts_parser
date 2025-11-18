@@ -73,11 +73,22 @@ export function SFRD_parser({
     flags: flags,
   });
 
+  const checkRL = () => {
+    return `${record["recordLength"]} ${
+      record["recordData"].length === record["recordLength"] ? "✅" : "❌"
+    }`;
+  };
+
   // Выводим основное содержимое записи
   console.table(
     Object.keys(record).map((key) => ({
       SFRD: serviceDataRecordSchemaDictionary[key],
-      value: key === "recordData" ? "<Buffer/>" : record[key],
+      value:
+        key === "recordLength"
+          ? checkRL()
+          : key === "recordData"
+          ? "<Buffer/>"
+          : record[key],
     }))
   );
 

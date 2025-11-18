@@ -8,7 +8,7 @@ import {
   commandDataSchemaDictionary,
 } from "./schemas";
 export function parseCommandData(buffer: Buffer) {
-  const flagsByte = Buffer.from([buffer.readUInt8(4)]); // Извлекаем байт с флагами
+  const flagsByte = Buffer.from([buffer.readUInt8(10)]); // Извлекаем байт с флагами
   const flags = parseFlags({
     flagsByte: flagsByte,
     flagSchema: commandDataFlagSchema,
@@ -30,7 +30,7 @@ export function parseCommandData(buffer: Buffer) {
   const result_table: any = [];
   Object.keys(result).map((key) => {
     result_table.push({
-      AUTH: commandDataSchemaDictionary[key],
+      COMMAND: commandDataSchemaDictionary[key],
       value: result[key],
     });
   });

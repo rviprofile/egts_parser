@@ -1,11 +1,7 @@
+import { EGTS_SR_COMMAND_DATA, EGTS_SR_RECORD_RESPONSE } from "../../constants";
 import { parseServiseProps } from "../../types";
-import { parseTermIdentity } from "../auth_service/term_identity";
 import { parseCommandData } from "./command-data";
 import { parseRecordResponse } from "./record-response";
-import {
-  recordResponseSchema,
-  recordResponseSchemaDictionary,
-} from "./schemas";
 
 /** Cписок подзаписей сервиса EGTS_COMMAND_SERVICE */
 const subrecordParsers = {
@@ -13,12 +9,12 @@ const subrecordParsers = {
    * EGTS_SR_RECORD_RESPONSE — Подзапись применяется для подтверждения процесса обработки записи протокола уровня
    * поддержки услуг. Данный тип подзаписи должен поддерживаться всеми сервисами
    */
-  0: parseRecordResponse,
+  [EGTS_SR_RECORD_RESPONSE]: parseRecordResponse,
   /**
    * EGTS_SR_COMMAND_DATA — Подзапись используется АСН и ТП для передачи команд, информационных сообщений,
    * подтверждений доставки, подтверждений выполнения команд, подтверждения прочтения сообщений и т.п.
    */
-  51: parseCommandData,
+  [EGTS_SR_COMMAND_DATA]: parseCommandData,
 };
 
 export function parseEGTSCommandsService({

@@ -7,7 +7,7 @@ export const commandDataFlagSchema: {
     position: number;
   };
 } = {
-  ACFE: { length: 1, position: 0 },
+  ACFE: { length: 1, position: 1 },
   CHSFE: { length: 1, position: 0 },
 };
 
@@ -23,8 +23,8 @@ export const commandDataSchema: SchemaType = {
   Flags: { type: "UInt8", length: 1 },
   CHS: { type: "UInt8", length: 1, flag: "CHSFE" },
   ACL: { type: "UInt8", length: 1, flag: "ACFE" },
-  AC: { type: "Binary", flag: "ACFE", connection: "ACL" },
-  CD: { type: "Binary" },
+  AC: { type: "Binary", flag: "ACFE", dynamic: "ACL" },
+  CD: { type: "Binary", to_end: true },
 };
 
 export const commandDataSchemaDictionary: { [key: string]: string } = {

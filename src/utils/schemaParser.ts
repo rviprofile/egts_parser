@@ -28,7 +28,7 @@ export function parseRecordWithSchema({
 
   for (const [
     key,
-    { type, length, flag, dynamic, connection },
+    { type, length, flag, dynamic, connection, to_end },
   ] of Object.entries(schema)) {
     // Если поле зависит от флага, проверяем значение флага
     if (flags && flag && flags[flag] === 0) {
@@ -45,6 +45,10 @@ export function parseRecordWithSchema({
     // Если поле зависит от другого поля, оно указано в connection. В таком случае connection не может быть равно нулю
     if (connection && parsedData[connection] === 0) {
       continue;
+    }
+    // Если это поле длинной до конца строки
+    if (to_end) {
+      fieldLength = buffer.length - offset
     }
 
     // Чтение данных в зависимости от типа

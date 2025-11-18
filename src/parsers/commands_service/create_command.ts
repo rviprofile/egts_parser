@@ -2,14 +2,16 @@ import { CRC8 } from "../../utils/crc8";
 import { CRC16 } from "../../utils/crc16";
 import { EGTS_COMMANDS_SERVICE, EGTS_PT_APPDATA } from "../../constants";
 
+/** AC (Authorization Code) */
+const acBuffer = Buffer.from([0x04, 0xd2]);
+
 export function createCommand({
-  socket,
-  trackers,
+  tracker,
   address,
   act,
   command_code,
   data,
-}) {
+}): Buffer {
   function createCommandData({
     address,
     act = 0,
@@ -59,113 +61,67 @@ export function createCommand({
      */
     commandDataBuffer.writeUInt8(SZ_ACT, command_offset++);
     /** CCD (Command Code) - код команды при ACT=0 */
-    commandDataBuffer.writeUInt16LE(ccd, command_offset);
-    command_offset += 2;
+    const ccdBuffer = Buffer.isBuffer(ccd)
+      ? ccd
+      : Buffer.from([ccd & 0xff, (ccd >> 8) & 0xff]);
+    ccdBuffer.copy(commandDataBuffer, command_offset);
+    command_offset += ccdBuffer.length;
 
     DT.copy(commandDataBuffer, command_offset);
     return commandDataBuffer;
   }
+
+  /** CD (Command Data) - тело команды */
+  const CD = createCommandData({
+    address,
+    ccd: command_code,
+    data,
+    act,
+  });
+
+  /** SRD (Subrecord Data) */
+  const srd = createSrCommandData({ CD });
+
+  /**
+   * RD (Record Data) - поле, содержащее информацию, присущую определенному типу
+   * сервиса (одну или несколько подзаписей сервиса типа, указанного в поле SST или RST, в
+   * зависимости от вида предаваемой информации)
+   */
+  const rd: Buffer = Buffer.alloc(1 + 2 + srd.length);
+  let rd_offset = 0;
+
+  /** SRT (Subrecord Type) - EGTS_SR_COMMAND_DATA */
+  rd.writeUInt8(51, rd_offset++);
+  /** SRL (Subrecord Length) */
+  rd.writeUInt16LE(srd.length, rd_offset);
+  rd_offset += 2;
+
+  // Копируем SRD внутрь RD
+  srd.copy(rd, rd_offset);
+
+  /** SFRD для пакета типа EGTS_PT_APPDATA */
+  const sfrd = createSDR({
+    RD: rd,
+    tracker,
+  }); //  SFRD - структура данных, зависящая от типа пакета и содержащая информацию протокола уровня поддержки услуг.
+
+  /** Финальный пакет */
+  return createPacket({ sfrd, tracker });
+}
+
+const createPacket = ({
+  sfrd,
+  tracker,
+}: {
+  sfrd: Buffer;
+  tracker: { PID: number };
+}): Buffer => {
   /** PRV (Protocol Version) — содержит значение 0x01*/
   const protocolVersion = 1;
   /** HL (Header Length) — Длина заголовка с CRC8 */
   const headerLength = 11;
   /** PT (Packet Type) */
   const packetType = EGTS_PT_APPDATA;
-  /** Подключенный трекер */
-  const tracker = trackers.get(socket);
-  /** AC (Authorization Code) */
-  const AuthCode = 1234;
-
-  /** SDR 1 (Service Data Record) */
-  const sdr1 = Buffer.alloc(47);
-  let sdr1_offset = 0;
-
-  /** RL (Record Length) - параметр определяет размер данных из поля RD */
-  sdr1.writeUInt16LE(21, sdr1_offset);
-  sdr1_offset += 2;
-
-  /** RN (Record Number) */
-  sdr1.writeUInt16LE(tracker.RN, sdr1_offset);
-  tracker.RN = (tracker.RN + 1) % 65536;
-  sdr1_offset += 2;
-
-  /**
-   * RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
-   *
-   * SSOD — 0 - сервис-отправитель расположен на авторизующей ТП.
-   * RSOD — 1 - сервис-получатель расположен на стороне АСН (авторизуемой ТП).
-   * GRP — 0 - принадлежность группе отсутствует.
-   * RPP — 00 - наивысший.
-   * TMFE — 0 - поле TM отсутствует.
-   * EVFE — 0 - поле EVID отсутствует.
-   * OBFE — 0 - поле OID отсутствует.
-   */
-  sdr1.writeUInt8(0b01000000, sdr1_offset++);
-
-  /** SST (Source Service Type) */
-  sdr1.writeUInt8(EGTS_COMMANDS_SERVICE, sdr1_offset++);
-  /** RST (Recipient Service Type) */
-  sdr1.writeUInt8(EGTS_COMMANDS_SERVICE, sdr1_offset++);
-
-  /** SRT (Subrecord Type) - EGTS_SR_COMMAND_DATA */
-  sdr1.writeUInt8(51, sdr1_offset++);
-  /** SRL (Subrecord Length) */
-  sdr1.writeUInt16LE(18, sdr1_offset);
-  sdr1_offset += 2;
-
-  // SRD (Subrecord Data)
-  // Подзапись EGTS_SR_COMMAND_DATA сервиса EGTS_COMMANDS_SERVICE
-
-  /**
-   * CT (Command Type) и CCT (Command Confirmation Type)
-   *
-   * 0101 = CT_COM - команда для выполнения на АСН,
-   * 0000 = CC_OK - успешное выполнение, положительный ответ (не имеет смысла при CT_COM)
-   */
-  sdr1.writeUInt8(0x0a, sdr1_offset++);
-  sdr1.writeUInt8(0x00, sdr1_offset++);
-
-  /** CID (Command Identifier) —  идентификатор команды, сообщения. */
-  sdr1.writeUInt32LE(0, sdr1_offset);
-  sdr1_offset += 4;
-
-  /** SID (Source Identifier) — идентификатор отправителя */
-  sdr1.writeUInt32LE(0, sdr1_offset);
-  sdr1_offset += 4;
-
-  /**
-   * ACFE + CHSFE
-   * bit1 = ACFE = 1 (есть ACL и AC)
-   * bit0 = CHSFE = 0 (CHS отсутствует)
-   * → 0b00000010 = 0x02
-   */
-  sdr1.writeUInt8(0x02, sdr1_offset++);
-
-  /** ACL (Authorization Code Length) — длина поля AC в байтах */
-  sdr1.writeUInt8(2, sdr1_offset++);
-
-  /** AC (Authorization Code) */
-  sdr1.writeUInt16LE(AuthCode, sdr1_offset);
-  sdr1_offset += 2;
-
-  /** CD (Command Data) - тело команды */
-  const CCD = createCommandData({
-    address,
-    ccd: command_code,
-    data,
-    act,
-  });
-  sdr1.set(CCD, sdr1_offset);
-  sdr1_offset += CCD.length;
-
-  /** SFRD для пакета типа EGTS_PT_APPDATA */
-  const sfrd = sdr1; //  SFRD - структура данных, зависящая от типа пакета и содержащая информацию протокола уровня поддержки услуг.
-  /** SFRCS (Services Frame Data Check Sum) */
-  const SFRCS = Buffer.alloc(2);
-  SFRCS.writeUInt16LE(CRC16(sfrd), 0);
-
-  /** SFRD с добавленной контрольной суммой */
-  const sfrdWithCRC16 = Buffer.concat([sfrd, SFRCS]);
 
   /** Заголовок пакета, первые 11 байт */
   const header = Buffer.alloc(headerLength);
@@ -194,8 +150,98 @@ export function createCommand({
   const headerCRC8 = CRC8(header.subarray(0, headerLength - 1));
   header.writeUInt8(headerCRC8, header_offset);
 
-  /** Финальный пакет из заголовка и данных */
-  const packet = Buffer.concat([header, sfrdWithCRC16]);
+  /** SFRCS (Services Frame Data Check Sum) — Контрольная сумма данных */
+  const SFRCS = Buffer.alloc(2);
+  SFRCS.writeUInt16LE(CRC16(sfrd), 0);
+
+  /** SFRD с добавленной контрольной суммой */
+  const sfrdWithCRC16 = Buffer.concat([sfrd, SFRCS]);
+
+  const packet: Buffer = Buffer.concat([header, sfrdWithCRC16]);
 
   return packet;
-}
+};
+
+const createSDR = ({
+  RD,
+  tracker,
+}: {
+  RD: Buffer;
+  tracker: { RN: number };
+}): Buffer => {
+  const sdrLength = 2 + 2 + 1 + 1 + 1 + RD.length; // RL + RN + RFL + SST + RST + RD
+  /** SDR (Service Data Record) */
+  const sdr = Buffer.alloc(sdrLength);
+  let sdr_offset = 0;
+
+  /** RL (Record Length) - параметр определяет размер данных из поля RD */
+  sdr.writeUInt16LE(RD.length, sdr_offset);
+  sdr_offset += 2;
+
+  /** RN (Record Number) */
+  sdr.writeUInt16LE(tracker.RN, sdr_offset);
+  tracker.RN = (tracker.RN + 1) % 65536;
+  sdr_offset += 2;
+
+  /**
+   * RFL (Record Flags) - Устанавливаем RSOD в 1, остальные флаги в 0
+   *
+   * SSOD — 0 - сервис-отправитель расположен на авторизующей ТП.
+   * RSOD — 1 - сервис-получатель расположен на стороне АСН (авторизуемой ТП).
+   * GRP — 0 - принадлежность группе отсутствует.
+   * RPP — 00 - наивысший.
+   * TMFE — 0 - поле TM отсутствует.
+   * EVFE — 0 - поле EVID отсутствует.
+   * OBFE — 0 - поле OID отсутствует.
+   */
+  sdr.writeUInt8(0b01000000, sdr_offset++);
+  /** SST (Source Service Type) */
+  sdr.writeUInt8(EGTS_COMMANDS_SERVICE, sdr_offset++);
+  /** RST (Recipient Service Type) */
+  sdr.writeUInt8(EGTS_COMMANDS_SERVICE, sdr_offset++);
+
+  RD.copy(sdr, sdr_offset); // вставляем RD внутрь
+  return sdr;
+};
+
+/** Подзапись EGTS_SR_COMMAND_DATA сервиса EGTS_COMMANDS_SERVICE */
+const createSrCommandData = ({ CD }: { CD: Buffer }): Buffer => {
+  const srCommandData: Buffer = Buffer.alloc(12 + 2 + CD.length);
+  let srCommandData_offset = 0;
+  /**
+   * CT (Command Type) и CCT (Command Confirmation Type)
+   *
+   * 0101 = CT_COM - команда для выполнения на АСН,
+   * 0000 = CC_OK - успешное выполнение, положительный ответ (не имеет смысла при CT_COM)
+   */
+  srCommandData.writeUInt8(0x0a, srCommandData_offset++);
+  srCommandData.writeUInt8(0x00, srCommandData_offset++);
+
+  /** CID (Command Identifier) —  идентификатор команды, сообщения. */
+  srCommandData.writeUInt32LE(0, srCommandData_offset);
+  srCommandData_offset += 4;
+
+  /** SID (Source Identifier) — идентификатор отправителя */
+  srCommandData.writeUInt32LE(0, srCommandData_offset);
+  srCommandData_offset += 4;
+
+  /**
+   * ACFE + CHSFE
+   * bit1 = ACFE = 1 (есть ACL и AC)
+   * bit0 = CHSFE = 0 (CHS отсутствует)
+   * → 0b00000010 = 0x02
+   */
+  srCommandData.writeUInt8(0x02, srCommandData_offset++);
+
+  /** ACL (Authorization Code Length) — длина поля AC в байтах */
+  srCommandData.writeUInt8(acBuffer.length, srCommandData_offset++);
+
+  /** AC (Authorization Code) */
+  acBuffer.copy(srCommandData, srCommandData_offset);
+  srCommandData_offset += acBuffer.length;
+
+  // Вставляем CD внутрь
+  CD.copy(srCommandData, srCommandData_offset);
+
+  return srCommandData;
+};

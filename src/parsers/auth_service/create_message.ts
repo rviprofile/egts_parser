@@ -10,15 +10,13 @@ import {
 /**
  * Функция для создания ответа об успешной авторизации с разрешенным сервисом
  */
-export function createAuthSuccessMessage({ socket, trackers }) {
+export function createAuthSuccessMessage({ tracker }) {
   /** PRV (Protocol Version) */
   const protocolVersion = 1;
   /** HL (Header Length) — Длина заголовка с CRC8 */
   const headerLength = 11;
   /** PT (Packet Type) */
   const packetType = EGTS_PT_APPDATA;
-  /** Подключенный трекер */
-  const tracker = trackers.get(socket);
 
   /** -- SDR 1 (Service Data Record) -- */
   const sdr1 = Buffer.alloc(11);
