@@ -83,41 +83,41 @@ export function parseEGTSAuthService({
             trackers.get(socket)?.PID || 0
           }\x1b[0m`
         );
-        // Отправляем это сообщение через TCP-сокет обратно трекеру
+        // Отправляем это сообщение через сокет трекеру
         socketSender({
           socket: socket,
           message: success,
           trackers: trackers,
         });
 
-        const command = createCommand({
-          /** ADR (Address) - адрес модуля, для которого данная команда предназначена. */
-          address: 0x0000,
+        // const command = createCommand({
+        //   /** ADR (Address) - адрес модуля, для которого данная команда предназначена. */
+        //   address: 0x0000,
 
-          /**
-           * ACT (Action) - описание действия, используемое в случае типа команды.
-           * 0 - параметры передаваемой команды, которая задается кодом из поля CCD.
-           * 2 - установка значения. Используется для установки нового значения определенному
-           * параметру в АСН. Устанавливаемый параметр определяется кодом из поля CCD, а его
-           * значение полем DT */
-          act: 0,
-          command_code: 0x000d, // EGTS_FLEET_GET_SENSORS_DATA
-          data: Buffer.from([0x01]),
-          tracker: trackers.get(socket),
-        });
-        setTimeout(() => {
-          console.log(
-            `\x1b[34mОтправили команду. PID: ${
-              trackers.get(socket)?.PID || 0
-            }\x1b[0m`,
-            command.toString("hex")
-          );
-          socketSender({
-            socket: socket,
-            message: command,
-            trackers: trackers,
-          });
-        }, 5000);
+        //   /**
+        //    * ACT (Action) - описание действия, используемое в случае типа команды.
+        //    * 0 - параметры передаваемой команды, которая задается кодом из поля CCD.
+        //    * 2 - установка значения. Используется для установки нового значения определенному
+        //    * параметру в АСН. Устанавливаемый параметр определяется кодом из поля CCD, а его
+        //    * значение полем DT */
+        //   act: 0,
+        //   command_code: 0x000d, // EGTS_FLEET_GET_SENSORS_DATA
+        //   data: Buffer.from([0x01]),
+        //   tracker: trackers.get(socket),
+        // });
+        // setTimeout(() => {
+        //   console.log(
+        //     `\x1b[34mОтправили команду. PID: ${
+        //       trackers.get(socket)?.PID || 0
+        //     }\x1b[0m`,
+        //     command.toString("hex")
+        //   );
+        //   socketSender({
+        //     socket: socket,
+        //     message: command,
+        //     trackers: trackers,
+        //   });
+        // }, 5000);
       }
     } else {
       console.log(

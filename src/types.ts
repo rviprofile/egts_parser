@@ -1,5 +1,7 @@
 import net from "net";
 
+export type trackersType = Map<string, { [key: string]: any }>;
+
 export type FlagsSchemaType = {
   [flagName: string]: { length: number; position: number };
 };

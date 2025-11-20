@@ -79,16 +79,25 @@ export function SFRD_parser({
     }`;
   };
 
+  const switcherValue = ({ key, value }: { key: string; value: any }) => {
+    switch (key) {
+      case "recordLength":
+        return checkRL();
+      case "recordData":
+        return "<Buffer/>";
+      case "tm":
+        const baseDate = new Date(Date.UTC(2010, 0, 1, 0, 0, 0)); // 01.01.2010 00:00:00 UTC
+        const resultDate = new Date(baseDate.getTime() + value * 1000); // умножаем на 1000, т.к. JS использует миллисекунды
+        return resultDate;
+      default:
+        return value;
+    }
+  };
   // Выводим основное содержимое записи
   console.table(
     Object.keys(record).map((key) => ({
       SFRD: serviceDataRecordSchemaDictionary[key],
-      value:
-        key === "recordLength"
-          ? checkRL()
-          : key === "recordData"
-          ? "<Buffer/>"
-          : record[key],
+      value: switcherValue({ key: key, value: record[key] }),
     }))
   );
 
