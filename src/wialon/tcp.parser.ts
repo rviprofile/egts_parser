@@ -1,50 +1,49 @@
 import { route } from "./parsers/index";
-import { trackersType } from "../types";
 import { PacketType } from "./packet.types";
-import { crc16 } from "crc";
-import net from "net";
 
 export type TCPMassage = {
   PT: PacketType;
   Msg: string;
 };
 
-export const parseTCP = ({
-  buffer,
-  trackers,
-  socket,
-}: {
-  buffer: Buffer;
-  trackers: trackersType;
-  socket: net.Socket;
-}): TCPMassage => {
-  /** Сообщение без хвоста */
-  const trimmed = buffer.toString().trim();
-  // Проверка на стартовый байт '#'
-  if (!trimmed.startsWith("#")) {
-    throw new Error("Invalid packet: missing starting #");
-  }
-  /** Сообщение без стартового байта '#' */
-  const withoutStart = trimmed.slice(1);
-  /** Индекс разделителя '#', который отделяет тип пакета */
-  const separatorIndex = withoutStart.indexOf("#");
-  // Проверка на наличие разделителя '#'
-  if (separatorIndex === -1) {
-    throw new Error("Invalid packet: missing separator #");
-  }
-  /** Тип пакета */
-  const PTchar = withoutStart[0] as PacketType;
-  /** Сообщение и контрольная сумма */
-  const msgAndCRC = withoutStart.slice(separatorIndex + 1);
+// Пакет который мы собираем по частям
+let tcpBuffer = "";
 
-  route[PTchar]?.({
-    message: msgAndCRC,
-    trackers,
-    socket,
-  });
+export const parseTCP = ({ buffer, trackers, socket }) => {
+  // if (buffer.toString()) {
+  //   console.log(buffer.toString());
+  // }
+  // Сразу добавляет полученные данные к буферу
+  tcpBuffer += buffer.toString();
 
-  return {
-    PT: PTchar as PacketType,
-    Msg: msgAndCRC,
-  };
+  // Индекс конца пакета
+  let index;
+  // Пока в буфере есть полный пакет (оканчивается на \r\n)
+  while ((index = tcpBuffer.indexOf("\r\n")) !== -1) {
+    // Извлекает полный пакет из буфера
+    const rawPacket = tcpBuffer.slice(0, index);
+    tcpBuffer = tcpBuffer.slice(index + 2);
+
+    if (!rawPacket.startsWith("#")) {
+      // Не Wialon, можно проигнорировать или обработать иначе
+      continue;
+    }
+
+    // Тип пакета
+    const match = rawPacket.match(/^#([^#]+)#/);
+    if (!match) continue;
+
+    const PTchar = match[1];
+    const message = rawPacket.replace(`#${PTchar}#`, "");
+
+    if (route[PTchar]) {
+      route[PTchar]({
+        message,
+        trackers,
+        socket,
+      });
+    } else {
+      console.warn("Неизвестный пакет:", rawPacket);
+    }
+  }
 };

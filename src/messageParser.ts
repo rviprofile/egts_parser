@@ -64,25 +64,25 @@ export function parseEGTSMessage({
   switch (PacketTypeCodes[buffer.readUInt8(9)]) {
     case "EGTS_PT_APPDATA": {
       /** Подтверждение пакета APPDATA */
-      try {
-        const confirm = handleConfirmation(
-          buffer,
-          trackers.get(socket)?.PID || 0
-        );
-        console.log(
-          `\x1b[34mОтправили подтверждение на пакет: ${buffer.readUInt16LE(
-            7
-          )}. Мой PID: ${trackers.get(socket)?.PID || 0}\x1b[0m`
-        );
-        confirm &&
-          socketSender({
-            socket,
-            message: confirm,
-            trackers,
-          });
-      } catch (error) {
-        console.error("[messageParser.ts]: ", error);
-      }
+      // try {
+      //   const confirm = handleConfirmation(
+      //     buffer,
+      //     trackers.get(socket)?.PID || 0
+      //   );
+      //   console.log(
+      //     `\x1b[34mОтправили подтверждение на пакет: ${buffer.readUInt16LE(
+      //       7
+      //     )}. Мой PID: ${trackers.get(socket)?.PID || 0}\x1b[0m`
+      //   );
+      //   confirm &&
+      //     socketSender({
+      //       socket,
+      //       message: confirm,
+      //       trackers,
+      //     });
+      // } catch (error) {
+      //   console.error("[messageParser.ts]: ", error);
+      // }
 
       /**  Длина заголовка (HL), для нас это смещение, после которого идут данные */
       let currentOffset = buffer.readUInt8(3);

@@ -65,7 +65,7 @@ export function parseEGTSAuthService({
       // Получаем текущее состояние трекера, привязанного к этому сокету
       const currentData = trackers.get(socket) || {};
       // Обновляем Map с данными — сохраняем старые значения, добавляем новые из AUTH
-      trackers.set(socket, {
+      trackers.set(socket, {  
         ...currentData, // Сохраняем старые данные
         AUTH: result, // Добавляем/обновляем поле AUTH
       });

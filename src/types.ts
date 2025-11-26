@@ -36,12 +36,7 @@ export type parseEGTSMessageProps = {
   /** TCP-сокет, откуда пришло сообщение. */
   socket: net.Socket;
   /** Коллекция всех подключенных трекеров */
-  trackers: Map<
-    net.Socket,
-    {
-      [key: string]: number;
-    }
-  >;
+  trackers: Map<net.Socket, { [key: string]: any }>;
 };
 
 export type parseFlagsProps = {

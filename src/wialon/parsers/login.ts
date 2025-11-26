@@ -38,5 +38,8 @@ export const LoginParser = ({ message, socket, trackers }: ParserProps) => {
   const Login = true;
   if (Login) {
     socket.write(Buffer.from(answer.AL.LoginSuccess, "ascii"));
+
+    // console.log("отправили текст");
+    // socket.write(`#setout1=1#\r\n`);
   }
 };
