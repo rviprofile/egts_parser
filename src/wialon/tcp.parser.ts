@@ -36,6 +36,8 @@ export const parseTCP = ({ buffer, trackers, socket }) => {
     const PTchar = match[1];
     const message = rawPacket.replace(`#${PTchar}#`, "");
 
+    
+
     if (route[PTchar]) {
       route[PTchar]({
         message,

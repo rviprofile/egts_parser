@@ -1,10 +1,17 @@
 import { ParserProps } from ".";
+import { COMMAND_TTL, commandQueue } from "../../types";
 import { answer } from "../messages";
 import { crc16 } from "crc";
 
+const { sql } = require("./../../mysql");
+
 const fields = ["Protocol_version", "IMEI", "Password"];
 
-export const LoginParser = ({ message, socket, trackers }: ParserProps) => {
+export const LoginParser = async ({
+  message,
+  socket,
+  trackers,
+}: ParserProps) => {
   const trimmed = message.trim();
   const prepared = trimmed.slice(0, -4);
 
@@ -39,7 +46,21 @@ export const LoginParser = ({ message, socket, trackers }: ParserProps) => {
   if (Login) {
     socket.write(Buffer.from(answer.AL.LoginSuccess, "ascii"));
 
-    // console.log("отправили текст");
-    // socket.write(`#setout1=1#\r\n`);
+    // Если есть отложенные команды для этого ИМЕИ, отправляем их
+    if (commandQueue.has(result.IMEI)) {
+      const now = Date.now();
+      const commands = commandQueue.get(result.IMEI) || [];
+      const validCommands = commandQueue
+        .get(result.IMEI)!
+        .filter((cmd) => now - cmd.timestamp <= COMMAND_TTL);
+      validCommands.forEach((cmd) => socket.write(cmd.command));
+      commandQueue.delete(result.IMEI);
+    }
+
+    try {
+      sql.addCar(result.IMEI.toString());
+    } catch (error) {
+      console.error("Ошибка при добавлении трекера в базу данных:", error);
+    }
   }
 };

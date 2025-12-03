@@ -67,3 +67,12 @@ export type serializeRecordWithSchemaProps = {
   flags: { [flagName: string]: number };
   jsonData: any;
 };
+
+export interface QueuedCommand {
+  command: string;
+  timestamp: number; // время добавления в миллисекундах
+}
+
+export const commandQueue: Map<string, QueuedCommand[]> = new Map();
+
+export const COMMAND_TTL = 10 * 1000; // 10 секунд в миллисекундах

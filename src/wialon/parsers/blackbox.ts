@@ -2,6 +2,8 @@ import { crc16 } from "crc";
 import { ParserProps } from ".";
 import { answer } from "../messages";
 
+const { sql } = require("./../../mysql");
+
 const fields: string[] = [
   "Date",
   "Time",
@@ -72,7 +74,10 @@ export const BlackBoxParser = ({ message, socket, trackers }: ParserProps) => {
       }
     });
 
-    // console.log(result);
+    const imei = Array.from(trackers.entries()).find(
+      ([imei, data]) => data.socket === socket
+    )?.[0];
+    imei && sql.updateData(imei, JSON.stringify(result));
   });
   console.log("Отпраивили АВ с подтверждением " + counter + " пакетов");
   socket.write(

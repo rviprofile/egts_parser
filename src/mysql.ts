@@ -1,6 +1,6 @@
 const mysql = require("mysql2/promise");
 
-export const pool = mysql.createPool({
+const pool = mysql.createPool({
   host: "localhost",
   user: "taxi_gps",
   password: "uIL~Z4~fiQ?@",
@@ -21,16 +21,28 @@ const getCarByImei = async (imei: string) => {
   return rows[0];
 };
 
-const addCar = async (imei: string, reg_number: string, model: string) => {
+const addCar = async (imei: string, reg_number?: string, model?: string) => {
   const [result] = await pool.query(
-    "INSERT INTO taxi_gps_cars (imei, reg_number, model) VALUES (?, ?, ?)",
+    "INSERT INTO taxi_gps_cars (imei, reg_number, model) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE imei = imei",
     [imei, reg_number, model]
   );
   return result;
 };
 
-export const sql = {
-  getAllCars,
-  getCarByImei,
-  addCar,
+const updateData = async (imei: string, data: any) => {
+  const [result] = await pool.query(
+    "INSERT INTO taxi_gps_cars (imei, blackbox) VALUES (?, ?) ON DUPLICATE KEY UPDATE blackbox = VALUES(blackbox)",
+    [imei, data]
+  );
+  return result;
+};
+
+module.exports = {
+  pool,
+  sql: {
+    getAllCars,
+    getCarByImei,
+    addCar,
+    updateData,
+  },
 };
