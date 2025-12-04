@@ -1,3 +1,4 @@
+import { BOOL } from "../../utils/boolEnv";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import {
   recordResponseSchema,
@@ -18,6 +19,6 @@ export function parseRecordResponse(buffer: Buffer) {
       value: result[key],
     });
   });
-  process.env.CONSOLE_EGTS && console.table(result_table);
+  BOOL(process.env.CONSOLE_EGTS) && console.table(result_table);
   return result;
 }

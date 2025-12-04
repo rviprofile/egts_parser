@@ -7,6 +7,7 @@ import {
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import { parseFlags } from "../../utils/flags_parser"; // Парсер для флагов
 import { consoleTableFlags } from "../../utils/consoleTableFlags";
+import { BOOL } from "../../utils/boolEnv";
 
 export function parseTermIdentity(buffer: Buffer) {
   const flagsByte = Buffer.from([buffer.readUInt8(4)]); // Извлекаем байт с флагами
@@ -15,7 +16,7 @@ export function parseTermIdentity(buffer: Buffer) {
     flagSchema: termIdentityFlagSchema,
   }); // Парсим флаги по схеме
 
-  process.env.CONSOLE_EGTS &&
+  BOOL(process.env.CONSOLE_EGTS) &&
     consoleTableFlags({
       flags,
       title: "AUTH flags",
@@ -36,7 +37,7 @@ export function parseTermIdentity(buffer: Buffer) {
       value: result[key],
     });
   });
-  process.env.CONSOLE_EGTS && console.table(result_table);
+  BOOL(process.env.CONSOLE_EGTS) && console.table(result_table);
 
   return result; // Возвращаем результат парсинга
 }

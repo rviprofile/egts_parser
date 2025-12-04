@@ -1,3 +1,4 @@
+import { BOOL } from "../utils/boolEnv";
 import { consoleTableFlags } from "../utils/consoleTableFlags";
 import { parseFlags } from "../utils/flags_parser";
 import { parseRecordWithSchema } from "../utils/schemaParser";
@@ -42,7 +43,7 @@ export function SFRD_parser({
     flagsByte: Buffer.from([buffer.readUInt8(offset + 4)]),
     flagSchema: serviceDataRecordFlagSchema,
   });
-  process.env.CONSOLE_EGTS &&
+  BOOL(process.env.CONSOLE_EGTS) &&
     // Выводим флаги в консоль
     consoleTableFlags({
       flags,
@@ -93,7 +94,7 @@ export function SFRD_parser({
         return value;
     }
   };
-  process.env.CONSOLE_EGTS &&
+  BOOL(process.env.CONSOLE_EGTS) &&
     // Выводим основное содержимое записи
     console.table(
       Object.keys(record).map((key) => ({

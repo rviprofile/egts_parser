@@ -3,6 +3,7 @@ import { parseFlags } from "../../utils/flags_parser";
 import { posDataFlagSchema, posDataSchema } from "./schemas";
 import { convertLat, convertLong } from "../../utils/convertCoordinate";
 import { parseNavigationTime } from "../../utils/parseNavigationTime";
+import { BOOL } from "../../utils/boolEnv";
 
 export function parsePosData(buffer: Buffer) {
   const flagsByte = buffer.subarray(12, 13); // Извлекаем байт с флагами
@@ -114,7 +115,7 @@ export function parsePosData(buffer: Buffer) {
       value: (result["ALT"] as Buffer).readUintLE(0, 3),
     },
   ];
-  if (!process.env.CONSOLE_EGTS) return result;
+  if (!BOOL(process.env.CONSOLE_EGTS)) return result;
   console.table(posData_table);
   return result; // Возвращаем результат парсинга
 }

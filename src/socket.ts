@@ -3,8 +3,6 @@ import net from "net";
 import { parseTCP } from "./wialon/tcp.parser";
 import { parseEGTSMessage } from "./messageParser";
 
-const SOCKET_PORT = 8002;
-
 /** Коллекция для хранения подключений трекеров */
 export const trackersWialon: trackersType = new Map<
   string,
@@ -30,10 +28,12 @@ export const initializeSocket = () => {
 
         if (isEGTS) {
           console.log("\x1b[32mНаправлен в ЕГТС парсер\x1b[0m");
+          /** Сохраняем трекер в коллекцию EGTS */
           trackersEGTS.set(socket, {
             PID: 0,
             RN: 0,
           });
+          /** Отправляем сообщение в EGTS парсер */
           parseEGTSMessage({
             buffer: data,
             socket: socket,
@@ -41,6 +41,7 @@ export const initializeSocket = () => {
           });
         } else if (isText) {
           console.log("\x1b[32mНаправлен в Wialon парсер\x1b[0m");
+          /** Отправляем сообщение в Wialon парсер */
           parseTCP({
             buffer: data,
             trackers: trackersWialon,
@@ -70,12 +71,12 @@ export const initializeSocket = () => {
 
     // Обрабатываем ошибки на уровне сокета
     socket.on("error", (err) => {
-      console.error("[socketHandler.ts]: ", "Ошибка сокета:", err.message);
+      console.error("[socket.ts]: ", "Ошибка сокета:", err.message);
     });
   });
 
   // Запускаем сервер
-  server.listen(SOCKET_PORT, () => {
-    console.log(`Сервер запущен на порту ${SOCKET_PORT}`);
+  server.listen(process.env.SOCKET_PORT, () => {
+    console.log(`Сервер запущен на порту ${process.env.SOCKET_PORT}`);
   });
 };

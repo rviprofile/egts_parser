@@ -1,3 +1,4 @@
+import { BOOL } from "../../utils/boolEnv";
 import { parseFlags } from "../../utils/flags_parser";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import { extPosDataFlagSchema, extPosDataSchema } from "./schemas";
@@ -13,7 +14,7 @@ export function parseExtPosData(buffer: Buffer) {
     schema: extPosDataSchema,
     flags: flags,
   });
-  if (!process.env.CONSOLE_EGTS) return result;
+  if (!BOOL(process.env.CONSOLE_EGTS)) return result;
   console.table(result);
   return result;
 }

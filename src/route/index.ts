@@ -2,6 +2,7 @@ import { parseEGTSAuthService } from "../parsers/auth_service";
 import { parseTermIdentity } from "../parsers/auth_service/term_identity";
 import { parseEGTSCommandsService } from "../parsers/commands_service";
 import { parseEGTSTeledataService } from "../parsers/teledata_service";
+import { BOOL } from "../utils/boolEnv";
 
 export const parsers = {
   /**
@@ -34,7 +35,7 @@ export function route({ data, socket, pid, trackers }) {
       trackers: trackers,
     });
   } else {
-    process.env.CONSOLE_EGTS &&
+    BOOL(process.env.CONSOLE_EGTS) &&
       console.error(
         "[route/index.ts]: ",
         `Неизвестный тип сервиса SST: ${

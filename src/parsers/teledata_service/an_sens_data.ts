@@ -1,3 +1,4 @@
+import { BOOL } from "../../utils/boolEnv";
 import { parseNavigationTime } from "../../utils/parseNavigationTime";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import { formatSeconds } from "../../utils/secondsToString";
@@ -113,7 +114,7 @@ export function parseAbsAnSensData(buffer: Buffer) {
   if (updateTimeout) {
     clearTimeout(updateTimeout);
   }
-  if (!process.env.CONSOLE_EGTS) return;
+  if (!BOOL(process.env.CONSOLE_EGTS)) return;
   // Устанавливаем новый таймер на 2 секунды
   updateTimeout = setTimeout(() => {
     // Если карта не обновлялась 2 секунды, выводим её содержимое

@@ -1,3 +1,4 @@
+import { BOOL } from "../../utils/boolEnv";
 import { consoleTableFlags } from "../../utils/consoleTableFlags";
 import { parseFlags } from "../../utils/flags_parser";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
@@ -14,7 +15,7 @@ export function parseCommandData(buffer: Buffer) {
     flagSchema: commandDataFlagSchema,
   }); // Парсим флаги по схеме
 
-  process.env.CONSOLE_EGTS &&
+  BOOL(process.env.CONSOLE_EGTS) &&
     consoleTableFlags({
       flags,
       title: "COMMAND flags",
@@ -35,7 +36,7 @@ export function parseCommandData(buffer: Buffer) {
       value: result[key],
     });
   });
-  process.env.CONSOLE_EGTS && console.table(result_table);
+  BOOL(process.env.CONSOLE_EGTS) && console.table(result_table);
 
   return result; // Возвращаем результат парсинга
 }

@@ -18,6 +18,7 @@ const getCarByImei = async (imei: string) => {
     "SELECT * FROM taxi_gps_cars WHERE imei = ?",
     [imei]
   );
+  console.log(rows);
   return rows[0];
 };
 

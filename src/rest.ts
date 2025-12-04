@@ -8,13 +8,11 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-const PORT_REST = 3077;
-
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 export const initializeRest = () => {
-  const serverRest = app.listen(PORT_REST, () => {
+  const serverRest = app.listen(process.env.REST_PORT, () => {
     const addressInfo = serverRest.address();
     if (typeof addressInfo === "string") {
       console.log(`REST API слушает на ${addressInfo}`);
@@ -27,10 +25,12 @@ export const initializeRest = () => {
     }
   });
 
+  /** Проверка работоспособности REST API */
   app.get("/", (req, res) => {
     res.json({ status: "ok", message: "REST API работает" });
   });
 
+  /** Получение списка всех автомобилей */
   app.get("/trackers/cars", async (req, res) => {
     try {
       const cars = await sql.getAllCars();
@@ -43,6 +43,7 @@ export const initializeRest = () => {
     }
   });
 
+  /** Получение информации об автомобиле по IMEI */
   app.get("/trackers/car/:imei", (req, res) => {
     try {
       const car = sql.getCarByImei(req.params.imei);

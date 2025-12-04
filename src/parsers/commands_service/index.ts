@@ -1,5 +1,6 @@
 import { EGTS_SR_COMMAND_DATA, EGTS_SR_RECORD_RESPONSE } from "../../constants";
 import { parseServiseProps } from "../../types";
+import { BOOL } from "../../utils/boolEnv";
 import { parseCommandData } from "./command-data";
 import { parseRecordResponse } from "./record-response";
 
@@ -47,7 +48,7 @@ export function parseEGTSCommandsService({
       /** Результат расшифровки содержимого подзаписи */
       const result = parserFn(subrecordData);
     } else {
-      process.env.CONSOLE_EGTS &&
+      BOOL(process.env.CONSOLE_EGTS) &&
         console.log(
           `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
         );

@@ -8,6 +8,7 @@ import {
   EGTS_SR_RECORD_RESPONSE,
   EGTS_SR_TERM_IDENTITY,
 } from "../../constants";
+import { BOOL } from "../../utils/boolEnv";
 
 /**
  * Словарь функций-парсеров для разных подтипов подзаписей EGTS_AUTH_SERVICE.
@@ -78,7 +79,7 @@ export function parseEGTSAuthService({
         const success: Buffer = createAuthSuccessMessage({
           tracker: trackers.get(socket),
         });
-        process.env.CONSOLE_EGTS &&
+        BOOL(process.env.CONSOLE_EGTS) &&
           console.log(
             `\x1b[34mОтправили сообщение об успешной авторизации с запросом телеметрии. PID: ${
               trackers.get(socket)?.PID || 0
@@ -121,7 +122,7 @@ export function parseEGTSAuthService({
         // }, 5000);
       }
     } else {
-      if (!process.env.CONSOLE_EGTS) return;
+      if (!BOOL(process.env.CONSOLE_EGTS)) return;
       console.log(
         `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
       );

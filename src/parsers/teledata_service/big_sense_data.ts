@@ -1,3 +1,5 @@
+import { BOOL } from "../../utils/boolEnv";
+
 const dsn_map = new Map();
 /** Переменная для хранения таймера */
 let updateTimeout: NodeJS.Timeout | null = null;
@@ -39,7 +41,7 @@ export function parseAbsDigSensData(buffer: Buffer) {
   if (updateTimeout) {
     clearTimeout(updateTimeout);
   }
-  if (!process.env.CONSOLE_EGTS) return;
+  if (!BOOL(process.env.CONSOLE_EGTS)) return;
   // Устанавливаем новый таймер на 2 секунды
   updateTimeout = setTimeout(() => {
     // Если карта не обновлялась 2 секунды, выводим её содержимое
