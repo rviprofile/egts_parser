@@ -1,5 +1,5 @@
 import { EGTS_SR_COMMAND_DATA, EGTS_SR_RECORD_RESPONSE } from "../../constants";
-import { parseServiseProps } from "../../types";
+import { parseServiseProps } from "../../../types";
 import { BOOL } from "../../utils/boolEnv";
 import { parseCommandData } from "./command-data";
 import { parseRecordResponse } from "./record-response";

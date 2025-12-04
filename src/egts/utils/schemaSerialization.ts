@@ -1,5 +1,5 @@
 import { Buffer } from "buffer"; // Модуль для работы с буферами в Node.js
-import { serializeRecordWithSchemaProps } from "../types";
+import { serializeRecordWithSchemaProps } from "../../types";
 
 /** Универсальная функция для создания бинарной строки на основе схемы и данных JSON */
 function serializeRecordWithSchema({

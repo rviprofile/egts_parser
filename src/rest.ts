@@ -30,6 +30,8 @@ export const initializeRest = () => {
     res.json({ status: "ok", message: "REST API работает" });
   });
 
+  app.use(authMiddleware);
+
   /** Получение списка всех автомобилей */
   app.get("/trackers/cars", async (req, res) => {
     try {
@@ -44,10 +46,10 @@ export const initializeRest = () => {
   });
 
   /** Получение информации об автомобиле по IMEI */
-  app.get("/trackers/car/:imei", (req, res) => {
+  app.get("/trackers/car/:imei", async (req, res) => {
     try {
-      const car = sql.getCarByImei(req.params.imei);
-      res.json({ status: "ok", data: car });
+      const car = await sql.getCarByImei(req.params.imei);
+      res.json({ status: "ok", data: car || null });
     } catch (error) {
       console.error("Ошибка при получении трекера из базы данных:", error);
       res
@@ -154,3 +156,25 @@ function sendCommandAndWait(
     socket.on("data", onData);
   });
 }
+
+/** Проверка Bearer токена */
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+
+  if (!authHeader)
+    return res
+      .status(401)
+      .json({ status: "error", message: "Нет заголовка Authorization" });
+
+  const [type, token] = authHeader.split(" ");
+
+  if (type !== "Bearer" || !token)
+    return res
+      .status(401)
+      .json({ status: "error", message: "Неверный формат Authorization" });
+
+  if (token !== process.env.REST_TOKEN)
+    return res.status(403).json({ status: "error", message: "Неверный токен" });
+
+  next();
+};

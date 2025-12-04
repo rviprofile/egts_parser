@@ -8,6 +8,8 @@ module.exports = {
         REST_PORT: 3077,
         CONSOLE_EGTS: false,
         CONSOLE_WIALON: true,
+        SECRET_KEY: "abcdefgh",
+        REST_TOKEN: 'mysecrettoken',
       },
     },
   ],

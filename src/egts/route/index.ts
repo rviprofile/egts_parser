@@ -1,5 +1,4 @@
 import { parseEGTSAuthService } from "../parsers/auth_service";
-import { parseTermIdentity } from "../parsers/auth_service/term_identity";
 import { parseEGTSCommandsService } from "../parsers/commands_service";
 import { parseEGTSTeledataService } from "../parsers/teledata_service";
 import { BOOL } from "../utils/boolEnv";

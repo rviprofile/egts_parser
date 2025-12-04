@@ -1,14 +1,14 @@
 import { trackersType } from "./types";
 import net from "net";
 import { parseTCP } from "./wialon/tcp.parser";
-import { parseEGTSMessage } from "./messageParser";
+import { parseEGTSMessage } from "./egts/messageParser";
 
 /** Коллекция для хранения подключений трекеров */
 export const trackersWialon: trackersType = new Map<
   string,
   { [key: string]: any }
 >();
-const trackersEGTS = new Map<net.Socket, { [key: string]: any }>();
+export const trackersEGTS = new Map<net.Socket, { [key: string]: any }>();
 
 export const initializeSocket = () => {
   // Создаем сервер для приема TCP-соединений

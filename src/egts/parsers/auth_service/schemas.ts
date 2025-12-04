@@ -1,4 +1,4 @@
-import { SchemaType } from "../../types";
+import { SchemaType } from "../../../types";
 
 /** Схема флагов подзаписи EGTS_SR_TERM_IDENTITY сервиса EGTS_AUTH_SERVICE */
 export const termIdentityFlagSchema: {

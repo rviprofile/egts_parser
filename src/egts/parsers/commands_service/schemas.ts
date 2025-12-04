@@ -1,4 +1,4 @@
-import { SchemaType } from "../../types";
+import { SchemaType } from "../../../types";
 
 /** Схема флагов подзаписи EGTS_SR_COMMAND_DATA сервисаEGTS_COMMANDS_SERVICE */
 export const commandDataFlagSchema: {

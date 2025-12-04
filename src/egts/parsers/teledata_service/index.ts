@@ -1,4 +1,4 @@
-import { parseServiseProps } from "../../types";
+import { parseServiseProps } from "../../../types";
 import { parseAbsAnSensData } from "./an_sens_data";
 import { parseAbsDigSensData } from "./big_sense_data";
 import { parseExtPosData } from "./ext_pos_data";

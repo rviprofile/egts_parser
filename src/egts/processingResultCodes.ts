@@ -1,4 +1,4 @@
-import { processingResultCodesType } from "./types";
+import { processingResultCodesType } from "../types";
 
 export const processingResultCodes: processingResultCodesType = {
   0: { value: "EGTS_PC_OK", description: "Успешно обработано" },

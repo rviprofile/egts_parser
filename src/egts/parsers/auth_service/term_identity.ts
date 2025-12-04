@@ -4,12 +4,22 @@ import {
   termIdentityFlagsDictionary,
   termIdentitySchema,
 } from "./schemas";
+import net from "net";
 import { parseRecordWithSchema } from "../../utils/schemaParser";
 import { parseFlags } from "../../utils/flags_parser"; // Парсер для флагов
 import { consoleTableFlags } from "../../utils/consoleTableFlags";
 import { BOOL } from "../../utils/boolEnv";
+import { trackersEGTS } from "../../../socket";
 
-export function parseTermIdentity(buffer: Buffer) {
+export function parseTermIdentity({
+  buffer,
+  socket,
+  trackers,
+}: {
+  buffer: Buffer;
+  socket: net.Socket;
+  trackers: Map<net.Socket, { [key: string]: any }>;
+}) {
   const flagsByte = Buffer.from([buffer.readUInt8(4)]); // Извлекаем байт с флагами
   const flags = parseFlags({
     flagsByte: flagsByte,
@@ -23,7 +33,7 @@ export function parseTermIdentity(buffer: Buffer) {
       dictionary: termIdentityFlagsDictionary,
     });
 
-  const result = parseRecordWithSchema({
+  const result: { [key: string]: any } = parseRecordWithSchema({
     buffer: buffer,
     schema: termIdentitySchema,
     flags: flags,
@@ -36,6 +46,9 @@ export function parseTermIdentity(buffer: Buffer) {
       AUTH: termIdentityDictionary[key],
       value: result[key],
     });
+  });
+  trackersEGTS.set(socket, {
+    IMEI: result.IMEI,
   });
   BOOL(process.env.CONSOLE_EGTS) && console.table(result_table);
 

@@ -1,4 +1,4 @@
-import { socketSenderProps } from "./types";
+import { socketSenderProps } from "../types";
 
 /**
  *  Функция для отпарвки сообщений по сокету.

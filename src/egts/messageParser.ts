@@ -9,7 +9,7 @@ import { parseFlags } from "./utils/flags_parser";
 import { PacketTypeCodes } from "./utils/decribe-pt";
 import { consoleTablePT } from "./utils/consoleTablePT";
 import { checkPT } from "./utils/checkPT";
-import { parseEGTSMessageProps } from "./types";
+import { parseEGTSMessageProps } from "../types";
 import { handleConfirmation } from "./utils/createConfirmationResponse";
 import { socketSender } from "./socketSender";
 import { BOOL } from "./utils/boolEnv";

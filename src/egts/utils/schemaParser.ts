@@ -1,4 +1,4 @@
-import { SchemaType } from "../types";
+import { SchemaType } from "../../types";
 import iconv from "iconv-lite";
 
 type parseRecordWithSchemaProps = {
@@ -48,7 +48,7 @@ export function parseRecordWithSchema({
     }
     // Если это поле длинной до конца строки
     if (to_end) {
-      fieldLength = buffer.length - offset
+      fieldLength = buffer.length - offset;
     }
 
     // Чтение данных в зависимости от типа

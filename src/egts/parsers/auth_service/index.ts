@@ -1,7 +1,7 @@
 import { parseTermIdentity } from "./term_identity";
 import { createAuthSuccessMessage } from "./create_message";
 import { socketSender } from "../../socketSender";
-import { parseServiseProps } from "../../types";
+import { parseServiseProps } from "../../../types";
 import { createCommand } from "../commands_service/create_command";
 import { parseRecordResponse } from "./record-response";
 import {
@@ -61,7 +61,11 @@ export function parseEGTSAuthService({
     // Если парсер найден
     if (parserFn) {
       /** Результат расшифровки содержимого подзаписи */
-      const result = parserFn(subrecordData);
+      const result = parserFn({
+        buffer: subrecordData,
+        socket,
+        trackers,
+      });
 
       // Получаем текущее состояние трекера, привязанного к этому сокету
       const currentData = trackers.get(socket) || {};
