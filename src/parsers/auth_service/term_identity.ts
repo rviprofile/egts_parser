@@ -15,11 +15,12 @@ export function parseTermIdentity(buffer: Buffer) {
     flagSchema: termIdentityFlagSchema,
   }); // Парсим флаги по схеме
 
-  consoleTableFlags({
-    flags,
-    title: "AUTH flags",
-    dictionary: termIdentityFlagsDictionary,
-  });
+  process.env.CONSOLE_EGTS &&
+    consoleTableFlags({
+      flags,
+      title: "AUTH flags",
+      dictionary: termIdentityFlagsDictionary,
+    });
 
   const result = parseRecordWithSchema({
     buffer: buffer,
@@ -35,7 +36,7 @@ export function parseTermIdentity(buffer: Buffer) {
       value: result[key],
     });
   });
-  console.table(result_table);
-  
+  process.env.CONSOLE_EGTS && console.table(result_table);
+
   return result; // Возвращаем результат парсинга
 }

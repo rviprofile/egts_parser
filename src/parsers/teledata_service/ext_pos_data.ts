@@ -13,6 +13,7 @@ export function parseExtPosData(buffer: Buffer) {
     schema: extPosDataSchema,
     flags: flags,
   });
+  if (!process.env.CONSOLE_EGTS) return result;
   console.table(result);
   return result;
 }

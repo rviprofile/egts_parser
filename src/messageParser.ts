@@ -43,6 +43,7 @@ export function parseEGTSMessage({
     flags: flags_PT,
   });
 
+  process.env.CONSOLE_EGTS &&
   // Выводит result_PT в консоль
   consoleTablePT({
     result_PT,
@@ -115,12 +116,15 @@ export function parseEGTSMessage({
     case "EGTS_PT_RESPONSE": {
       /** Обработка пакета RESPONSE (ответ на запрос) */
       let currentOffset = buffer.readUInt8(3); // Длина заголовка (HL)
-      console.log(
-        "RPID (Response Packet ID): ",
-        buffer.readUInt16LE(currentOffset)
-      );
+      
+      process.env.CONSOLE_EGTS &&
+        console.log(
+          "RPID (Response Packet ID): ",
+          buffer.readUInt16LE(currentOffset)
+        );
       currentOffset += 2;
-      console.log("PR (Processing Result): ", buffer.readUInt8(currentOffset));
+      process.env.CONSOLE_EGTS &&
+        console.log("PR (Processing Result): ", buffer.readUInt8(currentOffset));
       currentOffset += 1;
       /** Парсинг Service Frame Data (SFRD) */
       const record: {

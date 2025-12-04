@@ -14,11 +14,12 @@ export function parseCommandData(buffer: Buffer) {
     flagSchema: commandDataFlagSchema,
   }); // Парсим флаги по схеме
 
-  consoleTableFlags({
-    flags,
-    title: "COMMAND flags",
-    dictionary: commandDataFlagsDictionary,
-  });
+  process.env.CONSOLE_EGTS &&
+    consoleTableFlags({
+      flags,
+      title: "COMMAND flags",
+      dictionary: commandDataFlagsDictionary,
+    });
 
   const result = parseRecordWithSchema({
     buffer: buffer,
@@ -34,7 +35,7 @@ export function parseCommandData(buffer: Buffer) {
       value: result[key],
     });
   });
-  console.table(result_table);
+  process.env.CONSOLE_EGTS && console.table(result_table);
 
   return result; // Возвращаем результат парсинга
 }

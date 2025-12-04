@@ -65,7 +65,7 @@ export function parseEGTSAuthService({
       // Получаем текущее состояние трекера, привязанного к этому сокету
       const currentData = trackers.get(socket) || {};
       // Обновляем Map с данными — сохраняем старые значения, добавляем новые из AUTH
-      trackers.set(socket, {  
+      trackers.set(socket, {
         ...currentData, // Сохраняем старые данные
         AUTH: result, // Добавляем/обновляем поле AUTH
       });
@@ -78,11 +78,12 @@ export function parseEGTSAuthService({
         const success: Buffer = createAuthSuccessMessage({
           tracker: trackers.get(socket),
         });
-        console.log(
-          `\x1b[34mОтправили сообщение об успешной авторизации с запросом телеметрии. PID: ${
-            trackers.get(socket)?.PID || 0
-          }\x1b[0m`
-        );
+        process.env.CONSOLE_EGTS &&
+          console.log(
+            `\x1b[34mОтправили сообщение об успешной авторизации с запросом телеметрии. PID: ${
+              trackers.get(socket)?.PID || 0
+            }\x1b[0m`
+          );
         // Отправляем это сообщение через сокет трекеру
         socketSender({
           socket: socket,
@@ -120,6 +121,7 @@ export function parseEGTSAuthService({
         // }, 5000);
       }
     } else {
+      if (!process.env.CONSOLE_EGTS) return;
       console.log(
         `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
       );

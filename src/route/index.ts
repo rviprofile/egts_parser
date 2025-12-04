@@ -34,11 +34,12 @@ export function route({ data, socket, pid, trackers }) {
       trackers: trackers,
     });
   } else {
-    console.error(
-      "[route/index.ts]: ",
-      `Неизвестный тип сервиса SST: ${
-        data.record.sst
-      }. Поддерживаются следующие типы: ${Object.keys(parsers).join(", ")}`
-    );
+    process.env.CONSOLE_EGTS &&
+      console.error(
+        "[route/index.ts]: ",
+        `Неизвестный тип сервиса SST: ${
+          data.record.sst
+        }. Поддерживаются следующие типы: ${Object.keys(parsers).join(", ")}`
+      );
   }
 }

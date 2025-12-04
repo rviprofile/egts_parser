@@ -1,6 +1,7 @@
 import { initializeRest } from "./rest";
 import { initializeSocket } from "./socket";
 
+require('dotenv').config();
 const { pool } = require("./mysql");
 
 initializeSocket();

@@ -42,13 +42,13 @@ export function SFRD_parser({
     flagsByte: Buffer.from([buffer.readUInt8(offset + 4)]),
     flagSchema: serviceDataRecordFlagSchema,
   });
-
-  // Выводим флаги в консоль
-  consoleTableFlags({
-    flags,
-    title: "SFRD Flags",
-    dictionary: SFRDFlagsDictionary,
-  });
+  process.env.CONSOLE_EGTS &&
+    // Выводим флаги в консоль
+    consoleTableFlags({
+      flags,
+      title: "SFRD Flags",
+      dictionary: SFRDFlagsDictionary,
+    });
 
   // Базовая длина заголовка SDR = 7 байт
   let headerLength = 7;
@@ -93,13 +93,14 @@ export function SFRD_parser({
         return value;
     }
   };
-  // Выводим основное содержимое записи
-  console.table(
-    Object.keys(record).map((key) => ({
-      SFRD: serviceDataRecordSchemaDictionary[key],
-      value: switcherValue({ key: key, value: record[key] }),
-    }))
-  );
+  process.env.CONSOLE_EGTS &&
+    // Выводим основное содержимое записи
+    console.table(
+      Object.keys(record).map((key) => ({
+        SFRD: serviceDataRecordSchemaDictionary[key],
+        value: switcherValue({ key: key, value: record[key] }),
+      }))
+    );
 
   // Проверяем, что длина записи корректна
   if (record.recordLength + offset > buffer.length) {

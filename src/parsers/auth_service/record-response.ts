@@ -13,6 +13,6 @@ export function parseRecordResponse(buffer: Buffer) {
       value: result[key],
     });
   });
-  console.table(result_table);
+  process.env.CONSOLE_EGTS && console.table(result_table);
   return result;
 }

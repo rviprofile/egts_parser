@@ -47,9 +47,10 @@ export function parseEGTSCommandsService({
       /** Результат расшифровки содержимого подзаписи */
       const result = parserFn(subrecordData);
     } else {
-      console.log(
-        `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
-      );
+      process.env.CONSOLE_EGTS &&
+        console.log(
+          `\x1b[33mПарсер для Subrecord Type: ${subrecordType} не найден\x1b[0m`
+        );
     }
   }
 }

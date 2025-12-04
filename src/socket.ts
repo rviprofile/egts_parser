@@ -1,6 +1,7 @@
 import { trackersType } from "./types";
 import net from "net";
 import { parseTCP } from "./wialon/tcp.parser";
+import { parseEGTSMessage } from "./messageParser";
 
 const SOCKET_PORT = 8002;
 
@@ -28,23 +29,25 @@ export const initializeSocket = () => {
         const isText = firstByte >= 0x20 && firstByte <= 0x7e;
 
         if (isEGTS) {
+          console.log("\x1b[32mНаправлен в ЕГТС парсер\x1b[0m");
           trackersEGTS.set(socket, {
             PID: 0,
             RN: 0,
           });
-          // parseEGTSMessage({
-          //   buffer: data,
-          //   socket: socket,
-          //   trackers: trackersEGTS,
-          // });
+          parseEGTSMessage({
+            buffer: data,
+            socket: socket,
+            trackers: trackersEGTS,
+          });
         } else if (isText) {
+          console.log("\x1b[32mНаправлен в Wialon парсер\x1b[0m");
           parseTCP({
             buffer: data,
             trackers: trackersWialon,
             socket,
           });
         } else {
-          console.warn("Unknown packet format:",  data.toString('hex'));
+          console.warn("Unknown packet format:", data.toString("hex"));
         }
       } catch (error: any) {
         console.error(
@@ -57,8 +60,12 @@ export const initializeSocket = () => {
 
     // Обрабатываем отключение трекера
     socket.on("end", () => {
-      // Удаляем трекер из колекции
-      console.log("\x1b[31mТрекер отключился\x1b[0m");
+      if (trackersEGTS.has(socket)) {
+        // Удаляем трекер из колекции
+        trackersEGTS.delete(socket);
+      } else {
+        console.log("\x1b[31mТрекер отключился\x1b[0m");
+      }
     });
 
     // Обрабатываем ошибки на уровне сокета

@@ -114,6 +114,7 @@ export function parsePosData(buffer: Buffer) {
       value: (result["ALT"] as Buffer).readUintLE(0, 3),
     },
   ];
+  if (!process.env.CONSOLE_EGTS) return result;
   console.table(posData_table);
   return result; // Возвращаем результат парсинга
 }

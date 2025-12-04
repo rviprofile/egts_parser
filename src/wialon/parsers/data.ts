@@ -45,7 +45,7 @@ export const DataParser = ({ message, socket, trackers }: ParserProps) => {
       }
     });
 
-    // console.log(result);
+    console.log(result);
   });
   console.log(crc);
   socket.write(Buffer.from(answer.AD.DataSuccess, "ascii"));
